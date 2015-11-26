@@ -31,6 +31,22 @@ int main(int argc, const char **argv)
 
   bcm2835_gpio_fsel(PIN, BCM2835_GPIO_FSEL_OUTP);
 
+  //init graphics and the camera
+  InitGraphics();
+  CCamera* cam = StartCamera(MAIN_TEXTURE_WIDTH, MAIN_TEXTURE_HEIGHT,FPS,NUM_LEVELS,DO_ARGB_CONVERSION);
+
+  //create 4 textures of decreasing size
+  GfxTexture on_texture;
+  GfxTexture off_texture;
+  on_texture.Create(MAIN_TEXTURE_WIDTH,MAIN_TEXTURE_HEIGHT);
+  off_texture.Create(MAIN_TEXTURE_WIDTH,MAIN_TEXTURE_HEIGHT);
+
+  struct timeval time;
+  gettimeofday(&time, NULL);
+  unsigned long old_time = time.tv_sec * 1000000 + time.tv_usec;
+  unsigned long new_time;
+  int pos = 0;
+
   //Init ncurses
   initscr();      /* initialize the curses library */
   keypad(stdscr, TRUE);  /* enable keyboard mapping */
@@ -39,43 +55,30 @@ int main(int argc, const char **argv)
   clear();
   nodelay(stdscr, TRUE);
 
-  //init graphics and the camera
-  InitGraphics();
-  CCamera* cam = StartCamera(MAIN_TEXTURE_WIDTH, MAIN_TEXTURE_HEIGHT,FPS,NUM_LEVELS,DO_ARGB_CONVERSION);
-
-  //create 4 textures of decreasing size
-  GfxTexture textures[4];
-  for(int texidx = 0; texidx < NUM_LEVELS; texidx++)
-    textures[texidx].Create(MAIN_TEXTURE_WIDTH >> texidx, MAIN_TEXTURE_HEIGHT >> texidx);
-
-  struct timeval time;
-  gettimeofday(&time, NULL);
-  unsigned long old_time = time.tv_sec * 1000000 + time.tv_usec;
-  unsigned long new_time;
-  int pos = 0;
-
   printf("Running frame loop\n");
   for(int i = 0; i < 3000; i++) {
-    //pick a level to read based on current frame (flicking through them every 'FPS' frames)
-    //int texidx = (i / FPS)%NUM_LEVELS;
-    int texidx = 0;
 
-    //lock the chosen frame buffer, and copy it directly into the corresponding open gl texture
+    int down_sample = 0;
+
+    //spin until we have a camera frame
     const void* frame_data; int frame_sz;
-    if(cam->BeginReadFrame(texidx,frame_data,frame_sz)) {
-      //if doing argb conversion the frame data will be exactly the right size so just set directly
-      textures[texidx].SetPixels(frame_data);
+    while(!cam->BeginReadFrame(0,frame_data,frame_sz)) {};
 
-      cam->EndReadFrame(texidx);
-      bcm2835_gpio_write(PIN, laser_state ? HIGH : LOW);
-      laser_state = !laser_state;
-    }
+    if(laser_state)
+      on_texture.SetPixels(frame_data);
+    else
+      off_texture.SetPixels(frame_data);
+    
+    cam->EndReadFrame(down_sample);
+
+    laser_state = !laser_state;
+    bcm2835_gpio_write(PIN, laser_state ? HIGH : LOW);
 
     //begin frame, draw the texture then end frame (the bit of maths just fits the image to the screen while maintaining aspect ratio)
     BeginFrame();
     float aspect_ratio = float(MAIN_TEXTURE_WIDTH)/float(MAIN_TEXTURE_HEIGHT);
     float screen_aspect_ratio = 1280.f/720.f;
-    DrawTextureRect(&textures[texidx],-aspect_ratio/screen_aspect_ratio,-1.f,aspect_ratio/screen_aspect_ratio,1.f);
+    DrawTextureRect(&on_texture,&off_texture,-aspect_ratio/screen_aspect_ratio,-1.f,aspect_ratio/screen_aspect_ratio,1.f);
     EndFrame();
 
     gettimeofday(&time, NULL);
