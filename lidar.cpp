@@ -5,6 +5,8 @@
 #include "graphics.h"
 #include <ncurses.h>
 #include <sys/time.h>
+#include <pthread.h>
+#include <signal.h>
 
 #define MAIN_TEXTURE_WIDTH 512
 #define MAIN_TEXTURE_HEIGHT 512
@@ -14,22 +16,30 @@
 //how many detail levels (1 = just the capture res, > 1 goes down by half each level, 4 max)
 #define NUM_LEVELS 4
 
-#define FPS 30
+#define FPS 3
+#define laser_freq FPS * 2/3
 
 #define PIN RPI_GPIO_P1_11
 
 void revokeRoot();
+void cleanup();
+void catch_SIGINT(int sig);
+void* laserloop(void *arg);
+
+bool need_cleanup = false;
 
 int main(int argc, const char **argv)
 {
-  bool laser_state = false;
-
   //Init the laser output
   if(!bcm2835_init())
     return 1;
   revokeRoot();
 
-  bcm2835_gpio_fsel(PIN, BCM2835_GPIO_FSEL_OUTP);
+  signal(SIGINT, catch_SIGINT);
+
+  //Setting up threads
+  pthread_t laserthread;
+  pthread_create(&laserthread, NULL, &laserloop, NULL);
 
   //init graphics and the camera
   InitGraphics();
@@ -46,6 +56,7 @@ int main(int argc, const char **argv)
   unsigned long old_time = time.tv_sec * 1000000 + time.tv_usec;
   unsigned long new_time;
   int pos = 0;
+  float uspf = 33;
 
   //Init ncurses
   initscr();      /* initialize the curses library */
@@ -56,7 +67,7 @@ int main(int argc, const char **argv)
   nodelay(stdscr, TRUE);
 
   printf("Running frame loop\n");
-  for(int i = 0; i < 3000; i++) {
+  for(;!need_cleanup;) {
 
     int down_sample = 0;
 
@@ -64,15 +75,12 @@ int main(int argc, const char **argv)
     const void* frame_data; int frame_sz;
     while(!cam->BeginReadFrame(0,frame_data,frame_sz)) {};
 
-    if(laser_state)
+    if(true)
       on_texture.SetPixels(frame_data);
     else
       off_texture.SetPixels(frame_data);
     
     cam->EndReadFrame(down_sample);
-
-    laser_state = !laser_state;
-    bcm2835_gpio_write(PIN, laser_state ? HIGH : LOW);
 
     //begin frame, draw the texture then end frame (the bit of maths just fits the image to the screen while maintaining aspect ratio)
     BeginFrame();
@@ -84,11 +92,11 @@ int main(int argc, const char **argv)
     gettimeofday(&time, NULL);
     new_time = time.tv_sec * 1000000 + time.tv_usec;
     //mvprintw(0,0,"uS/Frame: %i\n",new_time - old_time);
-    int max = (new_time - old_time) / 2000;
+    int max = (new_time - old_time) / 1000;
     old_time = new_time;
 
     int j = 0;
-    for(;j < max;j++) {
+    for(;j < max/5;j++) {
       mvprintw(LINES - j,pos,"#");
     }
     for(;j < LINES;j++) {
@@ -99,11 +107,47 @@ int main(int argc, const char **argv)
     for(j = 0;j < LINES;j++) {
       mvprintw(LINES - j,pos,"|");
     }
-    mvprintw(0,0,"CURRENT mS/fame: %i",max);
+    mvprintw(0,0,"CURRENT mS/fame: %f",uspf = (uspf*.5 + max*.5));
     refresh();
   }
 
+  endwin();
   StopCamera();
+  return 0;
+}
+
+void* laserloop(void *arg) {
+  //Setting up timer stuff
+  struct timeval tv;
+  gettimeofday(&tv,NULL);
+  unsigned long old_time = 1000000 * tv.tv_sec + tv.tv_usec;
+
+  //Setting laser pin as output
+  bcm2835_gpio_fsel(PIN, BCM2835_GPIO_FSEL_OUTP);
+
+  bool laser_state = false;
+
+  for(;!need_cleanup;) {
+    laser_state = !laser_state;
+    bcm2835_gpio_write(PIN, laser_state ? HIGH : LOW);
+
+    //Timer loop code
+    gettimeofday(&tv,NULL);
+    unsigned long cur_time = 1000000 * tv.tv_sec + tv.tv_usec;
+    if(old_time + 1000000L/laser_freq > cur_time) {
+      usleep(old_time + 1000000/laser_freq - cur_time);
+    }
+    old_time += 1000000/laser_freq;
+  }
+  bcm2835_gpio_write(PIN, LOW);
+  return 0;
+}
+
+void cleanup() {
+}
+
+void catch_SIGINT(int sig) {
+  need_cleanup = true;
 }
 
 void revokeRoot()
