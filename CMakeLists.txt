@@ -15,4 +15,4 @@ add_custom_command(TARGET lidar
                    COMMAND sudo chown root lidar
                    COMMAND sudo chmod +s lidar)
 
-target_link_libraries(lidar libmmal_core.so libmmal_util.so libmmal_vc_client.so libvcos.so libbcm_host.so GLESv2 EGL bcm2835)
+target_link_libraries(lidar libmmal_core.so libmmal_util.so libmmal_vc_client.so libvcos.so libbcm_host.so GLESv2 EGL bcm2835 ncurses)
