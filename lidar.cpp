@@ -8,15 +8,15 @@
 #include <pthread.h>
 #include <signal.h>
 
-#define MAIN_TEXTURE_WIDTH 512
-#define MAIN_TEXTURE_HEIGHT 512
+#define CAMERA_WIDTH 640
+#define CAMERA_HEIGHT 480
 
 //should the camera convert frame data from yuv to argb automatically?
 #define DO_ARGB_CONVERSION true
 //how many detail levels (1 = just the capture res, > 1 goes down by half each level, 4 max)
-#define NUM_LEVELS 4
+#define NUM_LEVELS 1
 
-#define FPS 30 
+#define FPS 45 
 #define laser_freq FPS / 3
 #define laser_duty_cycle .4
 
@@ -44,11 +44,11 @@ int main(int argc, const char **argv)
 
   //init graphics and the camera
   InitGraphics();
-  CCamera* cam = StartCamera(MAIN_TEXTURE_WIDTH, MAIN_TEXTURE_HEIGHT,FPS,NUM_LEVELS,DO_ARGB_CONVERSION);
+  CCamera* cam = StartCamera(CAMERA_WIDTH, CAMERA_HEIGHT,FPS,NUM_LEVELS,DO_ARGB_CONVERSION);
 
   GfxTexture textures[3];
   for(int i = 0;i < 3;i++) {
-    textures[i].Create(MAIN_TEXTURE_WIDTH,MAIN_TEXTURE_HEIGHT);
+    textures[i].Create(CAMERA_WIDTH,CAMERA_HEIGHT);
   }
 
   struct timeval time;
@@ -86,7 +86,7 @@ int main(int argc, const char **argv)
     if(cur_frame == 0) {
       //begin frame, draw the texture then end frame (the bit of maths just fits the image to the screen while maintaining aspect ratio)
       BeginFrame();
-      float aspect_ratio = float(MAIN_TEXTURE_WIDTH)/float(MAIN_TEXTURE_HEIGHT);
+      float aspect_ratio = float(CAMERA_WIDTH)/float(CAMERA_HEIGHT);
       float screen_aspect_ratio = 1280.f/720.f;
       DrawTextureRect(textures,-aspect_ratio/screen_aspect_ratio,-1.f,aspect_ratio/screen_aspect_ratio,1.f);
       EndFrame();
