@@ -1,24 +1,18 @@
 varying vec2 tcoord;
-uniform sampler2D on;
-uniform sampler2D off;
+uniform sampler2D tex1;
+uniform sampler2D tex2;
+uniform sampler2D tex3;
 void main(void) 
 {
-    vec4 on_vec = texture2D(on,tcoord);
-    vec4 off_vec = texture2D(off,tcoord);
+    vec4 tex1v = texture2D(tex1,tcoord);
+    vec4 tex2v = texture2D(tex2,tcoord);
+    vec4 tex3v = texture2D(tex3,tcoord);
 
-    vec4 imp = off_vec;
     vec4 res;
-    res.r = on_vec.r - off_vec.r;
-    //res.g = on_vec.g - off_vec.g;
-    //res.b = on_vec.b - off_vec.b;
-    //res.a = on_vec.a - off_vec.a;
+    res = abs(tex1v - tex2v) + abs(tex2v - tex3v) + abs(tex3v - tex1v);
     res.g = res.r;
     res.b = res.r;
     res.a = 1.0;
-    imp.g = imp.r;
-    imp.b = imp.r;
-    imp.a = 1.0;
 
-    //gl_FragColor = texture2D(res,tcoord);
     gl_FragColor = clamp(res,vec4(0),vec4(1));
 }

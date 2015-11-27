@@ -283,24 +283,27 @@ bool GfxProgram::Create(GfxShader* vertex_shader, GfxShader* fragment_shader)
 	return true;	
 }
 
-void DrawTextureRect(GfxTexture* on_texture,GfxTexture* off_texture, float x0, float y0, float x1, float y1)
+void DrawTextureRect(GfxTexture* textures, float x0, float y0, float x1, float y1)
 {
 	glUseProgram(GSimpleProg.GetId());
 	check();
 
 	glUniform2f(glGetUniformLocation(GSimpleProg.GetId(),"offset"),x0,y0);
 	glUniform2f(glGetUniformLocation(GSimpleProg.GetId(),"scale"),x1-x0,y1-y0);
-	glUniform1i(glGetUniformLocation(GSimpleProg.GetId(),"on"), 0);
-	glUniform1i(glGetUniformLocation(GSimpleProg.GetId(),"off"), 1);
+	glUniform1i(glGetUniformLocation(GSimpleProg.GetId(),"tex1"), 0);
+	glUniform1i(glGetUniformLocation(GSimpleProg.GetId(),"tex2"), 1);
+	glUniform1i(glGetUniformLocation(GSimpleProg.GetId(),"tex3"), 2);
 	check();
 
 	glBindBuffer(GL_ARRAY_BUFFER, GQuadVertexBuffer);
 	check();
 
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D,on_texture->GetId());	check();
+	glBindTexture(GL_TEXTURE_2D,(textures + 0)->GetId());	check();
 	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D,off_texture->GetId());	check();
+	glBindTexture(GL_TEXTURE_2D,(textures + 1)->GetId());	check();
+	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_2D,(textures + 2)->GetId());	check();
 
 	GLuint loc = glGetAttribLocation(GSimpleProg.GetId(),"vertex");
 	check();

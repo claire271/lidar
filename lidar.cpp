@@ -16,8 +16,9 @@
 //how many detail levels (1 = just the capture res, > 1 goes down by half each level, 4 max)
 #define NUM_LEVELS 4
 
-#define FPS 3
-#define laser_freq FPS * 2/3
+#define FPS 30 
+#define laser_freq FPS / 3
+#define laser_duty_cycle .4
 
 #define PIN RPI_GPIO_P1_11
 
@@ -45,11 +46,10 @@ int main(int argc, const char **argv)
   InitGraphics();
   CCamera* cam = StartCamera(MAIN_TEXTURE_WIDTH, MAIN_TEXTURE_HEIGHT,FPS,NUM_LEVELS,DO_ARGB_CONVERSION);
 
-  //create 4 textures of decreasing size
-  GfxTexture on_texture;
-  GfxTexture off_texture;
-  on_texture.Create(MAIN_TEXTURE_WIDTH,MAIN_TEXTURE_HEIGHT);
-  off_texture.Create(MAIN_TEXTURE_WIDTH,MAIN_TEXTURE_HEIGHT);
+  GfxTexture textures[3];
+  for(int i = 0;i < 3;i++) {
+    textures[i].Create(MAIN_TEXTURE_WIDTH,MAIN_TEXTURE_HEIGHT);
+  }
 
   struct timeval time;
   gettimeofday(&time, NULL);
@@ -66,6 +66,8 @@ int main(int argc, const char **argv)
   clear();
   nodelay(stdscr, TRUE);
 
+  unsigned char cur_frame = 0;
+
   printf("Running frame loop\n");
   for(;!need_cleanup;) {
 
@@ -75,38 +77,27 @@ int main(int argc, const char **argv)
     const void* frame_data; int frame_sz;
     while(!cam->BeginReadFrame(0,frame_data,frame_sz)) {};
 
-    if(true)
-      on_texture.SetPixels(frame_data);
-    else
-      off_texture.SetPixels(frame_data);
+    textures[cur_frame].SetPixels(frame_data);
+    cur_frame++;
+    cur_frame %= 3;
     
     cam->EndReadFrame(down_sample);
 
-    //begin frame, draw the texture then end frame (the bit of maths just fits the image to the screen while maintaining aspect ratio)
-    BeginFrame();
-    float aspect_ratio = float(MAIN_TEXTURE_WIDTH)/float(MAIN_TEXTURE_HEIGHT);
-    float screen_aspect_ratio = 1280.f/720.f;
-    DrawTextureRect(&on_texture,&off_texture,-aspect_ratio/screen_aspect_ratio,-1.f,aspect_ratio/screen_aspect_ratio,1.f);
-    EndFrame();
-
+    if(cur_frame == 0) {
+      //begin frame, draw the texture then end frame (the bit of maths just fits the image to the screen while maintaining aspect ratio)
+      BeginFrame();
+      float aspect_ratio = float(MAIN_TEXTURE_WIDTH)/float(MAIN_TEXTURE_HEIGHT);
+      float screen_aspect_ratio = 1280.f/720.f;
+      DrawTextureRect(textures,-aspect_ratio/screen_aspect_ratio,-1.f,aspect_ratio/screen_aspect_ratio,1.f);
+      EndFrame();
+    }
+     
     gettimeofday(&time, NULL);
     new_time = time.tv_sec * 1000000 + time.tv_usec;
     //mvprintw(0,0,"uS/Frame: %i\n",new_time - old_time);
     int max = (new_time - old_time) / 1000;
     old_time = new_time;
 
-    int j = 0;
-    for(;j < max/5;j++) {
-      mvprintw(LINES - j,pos,"#");
-    }
-    for(;j < LINES;j++) {
-      mvprintw(LINES - j,pos," ");
-    }
-    pos++;
-    pos %= COLS;
-    for(j = 0;j < LINES;j++) {
-      mvprintw(LINES - j,pos,"|");
-    }
     mvprintw(0,0,"CURRENT mS/fame: %f",uspf = (uspf*.5 + max*.5));
     refresh();
   }
@@ -134,10 +125,11 @@ void* laserloop(void *arg) {
     //Timer loop code
     gettimeofday(&tv,NULL);
     unsigned long cur_time = 1000000 * tv.tv_sec + tv.tv_usec;
-    if(old_time + 1000000L/laser_freq > cur_time) {
-      usleep(old_time + 1000000/laser_freq - cur_time);
+    unsigned long time_diff = 1000000L/(laser_freq) * (laser_state ? laser_duty_cycle : (1 - laser_duty_cycle));
+    if(old_time + time_diff > cur_time) {
+      usleep(old_time + time_diff - cur_time);
     }
-    old_time += 1000000/laser_freq;
+    old_time += time_diff;
   }
   bcm2835_gpio_write(PIN, LOW);
   return 0;

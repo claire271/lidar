@@ -56,4 +56,4 @@ public:
 	GLuint GetId() { return Id; }
 };
 
-void DrawTextureRect(GfxTexture* on_texture,GfxTexture* off_texture, float x0, float y0, float x1, float y1);
+void DrawTextureRect(GfxTexture* textures, float x0, float y0, float x1, float y1);
