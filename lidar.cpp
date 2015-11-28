@@ -16,7 +16,7 @@
 //how many detail levels (1 = just the capture res, > 1 goes down by half each level, 4 max)
 #define NUM_LEVELS 1
 
-#define FPS 45 
+#define FPS 30 
 #define laser_freq FPS / 3
 #define laser_duty_cycle .4
 
