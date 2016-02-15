@@ -84,12 +84,9 @@ int main(int argc, const char **argv)
     cam->EndReadFrame(down_sample);
 
     if(cur_frame == 0) {
-      //begin frame, draw the texture then end frame (the bit of maths just fits the image to the screen while maintaining aspect ratio)
+      //begin frame, draw the texture then end frame
       BeginFrame();
-      float aspect_ratio = float(CAMERA_WIDTH)/float(CAMERA_HEIGHT);
-      //float screen_aspect_ratio = 1280.f/720.f;
-      float screen_aspect_ratio = aspect_ratio;
-      DrawTextureRect(textures,-aspect_ratio/screen_aspect_ratio,-1.f,aspect_ratio/screen_aspect_ratio,1.f,CAMERA_WIDTH,CAMERA_HEIGHT,(GLvoid*)data_buf);
+      DrawTextureRect(textures,(GLvoid*)data_buf);
       EndFrame();
       mvprintw(1,0,"0x%X 0x%X 0x%X 0x%X",((unsigned char*)(data_buf + 500))[0],
                ((unsigned char*)(data_buf + 500))[1],

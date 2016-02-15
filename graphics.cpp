@@ -288,13 +288,13 @@ bool GfxProgram::Create(GfxShader* vertex_shader, GfxShader* fragment_shader)
 	return true;	
 }
 
-void DrawTextureRect(GfxTexture* textures, float x0, float y0, float x1, float y1, int width, int height, GLvoid* data)
+void DrawTextureRect(GfxTexture* textures, GLvoid* data)
 {
 	glUseProgram(GSimpleProg.GetId());
 	check();
 
-	glUniform2f(glGetUniformLocation(GSimpleProg.GetId(),"offset"),x0,y0);
-	glUniform2f(glGetUniformLocation(GSimpleProg.GetId(),"scale"),x1-x0,y1-y0);
+	glUniform2f(glGetUniformLocation(GSimpleProg.GetId(),"offset"),-1.f,1.f);
+	glUniform2f(glGetUniformLocation(GSimpleProg.GetId(),"scale"),2.f,-2.f);
 	glUniform1i(glGetUniformLocation(GSimpleProg.GetId(),"tex1"), 0);
 	glUniform1i(glGetUniformLocation(GSimpleProg.GetId(),"tex2"), 1);
 	glUniform1i(glGetUniformLocation(GSimpleProg.GetId(),"tex3"), 2);
@@ -328,8 +328,7 @@ void DrawTextureRect(GfxTexture* textures, float x0, float y0, float x1, float y
 	glFlush();
 	check();
 
-    glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, data);
-    //glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+    glReadPixels(0, 0, CAMERA_WIDTH, CAMERA_HEIGHT, GL_RGBA, GL_UNSIGNED_BYTE, data);
 	check();
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
