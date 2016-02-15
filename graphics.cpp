@@ -8,6 +8,7 @@
 #include <iostream>
 #include "bcm_host.h"
 #include "graphics.h"
+#include "config.h"
 
 #define check() assert(glGetError() == 0)
 
@@ -81,6 +82,10 @@ void InitGraphics()
 
 	// create an EGL window surface
 	success = graphics_get_display_size(0 /* LCD */, &GScreenWidth, &GScreenHeight);
+
+    GScreenWidth = 640;
+    GScreenHeight = 480;
+    printf("%i %i\n",GScreenWidth,GScreenHeight);
 	assert( success >= 0 );
 
 	dst_rect.x = 0;

@@ -18,6 +18,11 @@ void main(void)
     res.b = res.r;
     res.a = 1.0;
 
+    //Testing
+    //res.r = 1.0;
+    //res.g = 0.0;
+    //res.b = 0.0;
+
     //float x = res.r;
     //dFdxFine(0.0);
 
