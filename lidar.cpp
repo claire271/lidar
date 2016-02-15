@@ -29,6 +29,8 @@ void* laserloop(void *arg);
 
 bool need_cleanup = false;
 
+GLint data_buf[CAMERA_WIDTH * CAMERA_HEIGHT];
+
 int main(int argc, const char **argv)
 {
   //Init the laser output
@@ -88,7 +90,7 @@ int main(int argc, const char **argv)
       BeginFrame();
       float aspect_ratio = float(CAMERA_WIDTH)/float(CAMERA_HEIGHT);
       float screen_aspect_ratio = 1280.f/720.f;
-      DrawTextureRect(textures,-aspect_ratio/screen_aspect_ratio,-1.f,aspect_ratio/screen_aspect_ratio,1.f);
+      DrawTextureRect(textures,-aspect_ratio/screen_aspect_ratio,-1.f,aspect_ratio/screen_aspect_ratio,1.f,CAMERA_WIDTH,CAMERA_HEIGHT,(GLvoid*)data_buf);
       EndFrame();
     }
      

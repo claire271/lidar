@@ -1,4 +1,3 @@
-
 attribute vec4 vertex;
 uniform vec2 offset;
 uniform vec2 scale;

@@ -283,7 +283,7 @@ bool GfxProgram::Create(GfxShader* vertex_shader, GfxShader* fragment_shader)
 	return true;	
 }
 
-void DrawTextureRect(GfxTexture* textures, float x0, float y0, float x1, float y1)
+void DrawTextureRect(GfxTexture* textures, float x0, float y0, float x1, float y1, int width, int height, GLvoid* data)
 {
 	glUseProgram(GSimpleProg.GetId());
 	check();
@@ -323,9 +323,12 @@ void DrawTextureRect(GfxTexture* textures, float x0, float y0, float x1, float y
 	glFlush();
 	check();
 
+    glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, data);
+    //glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+	check();
+
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindTexture(GL_TEXTURE_2D, 0);
-
 }
 
 bool GfxTexture::Create(int width, int height, const void* data)
