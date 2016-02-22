@@ -287,6 +287,7 @@ void DrawTextureRect(GfxTexture* textures, GLvoid* data)
 	glUniform1i(glGetUniformLocation(GSimpleProg.GetId(),"tex1"), 0);
 	glUniform1i(glGetUniformLocation(GSimpleProg.GetId(),"tex2"), 1);
 	glUniform1i(glGetUniformLocation(GSimpleProg.GetId(),"tex3"), 2);
+	glUniform1i(glGetUniformLocation(GSimpleProg.GetId(),"tex4"), 3);
 	check();
 
 	glBindBuffer(GL_ARRAY_BUFFER, GQuadVertexBuffer);
@@ -298,6 +299,8 @@ void DrawTextureRect(GfxTexture* textures, GLvoid* data)
 	glBindTexture(GL_TEXTURE_2D,(textures + 1)->GetId());	check();
 	glActiveTexture(GL_TEXTURE2);
 	glBindTexture(GL_TEXTURE_2D,(textures + 2)->GetId());	check();
+	glActiveTexture(GL_TEXTURE3);
+	glBindTexture(GL_TEXTURE_2D,(textures + 3)->GetId());	check();
 
 	GLuint loc = glGetAttribLocation(GSimpleProg.GetId(),"vertex");
 	check();

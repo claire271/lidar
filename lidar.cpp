@@ -50,13 +50,10 @@ int main(int argc, const char **argv)
   InitGraphics();
   CCamera* cam = StartCamera(CAMERA_WIDTH, CAMERA_HEIGHT,FPS,NUM_LEVELS,DO_ARGB_CONVERSION);
 
-  GfxTexture textures[3];
-  for(int i = 0;i < 3;i++) {
+  GfxTexture textures[4];
+  for(int i = 0;i < 4;i++) {
     textures[i].Create(CAMERA_WIDTH,CAMERA_HEIGHT);
   }
-
-  GfxTexture out_tex;
-  out_tex.Create(CAMERA_WIDTH,CAMERA_HEIGHT);
 
   for(int i = 0;i < CAMERA_HEIGHT;i++) {
     for(int j = 0;j < CAMERA_WIDTH;j++) {
@@ -113,7 +110,7 @@ int main(int argc, const char **argv)
           GLubyte value = data_buf[((i * CAMERA_WIDTH) + j) * 4];
           if(value > max_value[j]) {
             max_value[j] = value;
-            max_index[j] = i;
+            max_index[j] = CAMERA_HEIGHT - i - 1;
           }
         }
       }
@@ -123,7 +120,14 @@ int main(int argc, const char **argv)
                ((unsigned char*)(data_buf + 500))[2],
                ((unsigned char*)(data_buf + 500))[3]);
 
-      out_tex.SetPixels(out_tex_buf);
+      for(int j = 0;j < CAMERA_WIDTH;j++) {
+        out_tex_buf[((max_index[j] * CAMERA_WIDTH) + j) * 4 + 1] = 255;
+      }
+      textures[3].SetPixels(out_tex_buf);
+      for(int j = 0;j < CAMERA_WIDTH;j++) {
+        out_tex_buf[((max_index[j] * CAMERA_WIDTH) + j) * 4 + 1] = 0;
+      }
+
       EndFrame();
     }
      
