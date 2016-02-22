@@ -12,8 +12,6 @@
 
 #define check() assert(glGetError() == 0)
 
-uint32_t GScreenWidth;
-uint32_t GScreenHeight;
 EGLDisplay GDisplay;
 EGLSurface GSurface;
 EGLContext GContext;
@@ -26,7 +24,6 @@ GLuint GQuadVertexBuffer;
 void InitGraphics()
 {
 	bcm_host_init();
-	int32_t success = 0;
 	EGLBoolean result;
 	EGLint num_config;
 
@@ -80,23 +77,15 @@ void InitGraphics()
 	assert(GContext!=EGL_NO_CONTEXT);
 	check();
 
-	// create an EGL window surface
-	success = graphics_get_display_size(0 /* LCD */, &GScreenWidth, &GScreenHeight);
-
-    GScreenWidth = 640;
-    GScreenHeight = 480;
-    printf("%i %i\n",GScreenWidth,GScreenHeight);
-	assert( success >= 0 );
-
 	dst_rect.x = 0;
 	dst_rect.y = 0;
-	dst_rect.width = GScreenWidth;
-	dst_rect.height = GScreenHeight;
+	dst_rect.width = CAMERA_WIDTH;
+	dst_rect.height = CAMERA_HEIGHT;
 
 	src_rect.x = 0;
 	src_rect.y = 0;
-	src_rect.width = GScreenWidth << 16;
-	src_rect.height = GScreenHeight << 16;        
+	src_rect.width = CAMERA_WIDTH << 16;
+	src_rect.height = CAMERA_HEIGHT << 16;        
 
 	dispman_display = vc_dispmanx_display_open( 0 /* LCD */);
 	dispman_update = vc_dispmanx_update_start( 0 );
@@ -106,8 +95,8 @@ void InitGraphics()
 		&src_rect, DISPMANX_PROTECTION_NONE, 0 /*alpha*/, 0/*clamp*/, (DISPMANX_TRANSFORM_T)0/*transform*/);
 
 	nativewindow.element = dispman_element;
-	nativewindow.width = GScreenWidth;
-	nativewindow.height = GScreenHeight;
+	nativewindow.width = CAMERA_WIDTH;
+	nativewindow.height = CAMERA_HEIGHT;
 	vc_dispmanx_update_submit_sync( dispman_update );
 
 	check();
@@ -126,8 +115,8 @@ void InitGraphics()
 	glClear( GL_COLOR_BUFFER_BIT );
 
 	//load the test shaders
-	GSimpleVS.LoadVertexShader("simplevertshader.glsl");
-	GSimpleFS.LoadFragmentShader("simplefragshader.glsl");
+	GSimpleVS.LoadVertexShader("vertexshader.glsl");
+	GSimpleFS.LoadFragmentShader("f3fragmentshader.glsl");
 	GSimpleProg.Create(&GSimpleVS,&GSimpleFS);
 	check();
 	glUseProgram(GSimpleProg.GetId());
@@ -151,7 +140,7 @@ void InitGraphics()
 void BeginFrame()
 {
 	// Prepare viewport
-	glViewport ( 0, 0, GScreenWidth, GScreenHeight );
+	glViewport ( 0, 0, CAMERA_WIDTH, CAMERA_HEIGHT );
 	check();
 
 	// Clear the background

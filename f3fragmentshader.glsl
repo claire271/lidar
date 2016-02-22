@@ -20,8 +20,8 @@ void main(void)
 
     //Testing
     //res.r = 1.0;
-    //res.g = 0.0;
-    //res.b = 0.0;
+    res.g = 0.0;
+    res.b = 0.0;
 
     //float x = res.r;
     //dFdxFine(0.0);

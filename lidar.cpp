@@ -27,7 +27,11 @@ void* laserloop(void *arg);
 
 bool need_cleanup = false;
 
-GLint data_buf[CAMERA_WIDTH * CAMERA_HEIGHT];
+GLubyte data_buf[CAMERA_WIDTH * CAMERA_HEIGHT * 4];
+GLubyte max_value[CAMERA_WIDTH];
+GLshort max_index[CAMERA_WIDTH];
+
+GLubyte out_tex_buf[CAMERA_WIDTH * CAMERA_HEIGHT * 4];
 
 int main(int argc, const char **argv)
 {
@@ -49,6 +53,18 @@ int main(int argc, const char **argv)
   GfxTexture textures[3];
   for(int i = 0;i < 3;i++) {
     textures[i].Create(CAMERA_WIDTH,CAMERA_HEIGHT);
+  }
+
+  GfxTexture out_tex;
+  out_tex.Create(CAMERA_WIDTH,CAMERA_HEIGHT);
+
+  for(int i = 0;i < CAMERA_HEIGHT;i++) {
+    for(int j = 0;j < CAMERA_WIDTH;j++) {
+      out_tex_buf[((i * CAMERA_WIDTH) + j) * 4 + 0] = 0;
+      out_tex_buf[((i * CAMERA_WIDTH) + j) * 4 + 1] = 0;
+      out_tex_buf[((i * CAMERA_WIDTH) + j) * 4 + 2] = 0;
+      out_tex_buf[((i * CAMERA_WIDTH) + j) * 4 + 3] = 0;
+    }
   }
 
   struct timeval time;
@@ -87,11 +103,28 @@ int main(int argc, const char **argv)
       //begin frame, draw the texture then end frame
       BeginFrame();
       DrawTextureRect(textures,(GLvoid*)data_buf);
-      EndFrame();
+
+      for(int j = 0;j < CAMERA_WIDTH;j++) {
+        max_value[j] = 0;
+        max_index[j] = -1;
+      }
+      for(int i = 0;i < CAMERA_HEIGHT;i++) {
+        for(int j = 0;j < CAMERA_WIDTH;j++) {
+          GLubyte value = data_buf[((i * CAMERA_WIDTH) + j) * 4];
+          if(value > max_value[j]) {
+            max_value[j] = value;
+            max_index[j] = i;
+          }
+        }
+      }
+
       mvprintw(1,0,"0x%X 0x%X 0x%X 0x%X",((unsigned char*)(data_buf + 500))[0],
                ((unsigned char*)(data_buf + 500))[1],
                ((unsigned char*)(data_buf + 500))[2],
                ((unsigned char*)(data_buf + 500))[3]);
+
+      out_tex.SetPixels(out_tex_buf);
+      EndFrame();
     }
      
     gettimeofday(&time, NULL);
@@ -100,7 +133,7 @@ int main(int argc, const char **argv)
     int max = (new_time - old_time) / 1000;
     old_time = new_time;
 
-    mvprintw(0,0,"CURRENT mS/fame: %f",uspf = (uspf*.5 + max*.5));
+    mvprintw(0,0,"CURRENT mS/fame: %.2f",uspf = (uspf*.5 + max*.5));
     refresh();
   }
 
