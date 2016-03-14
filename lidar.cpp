@@ -101,6 +101,7 @@ int main(int argc, const char **argv)
       BeginFrame();
       DrawTextureRect(textures,(GLvoid*)data_buf);
 
+      //Finding the max position and value
       for(int j = 0;j < CAMERA_WIDTH;j++) {
         max_value[j] = 0;
         max_index[j] = -1;
@@ -115,17 +116,21 @@ int main(int argc, const char **argv)
         }
       }
 
+      //Test print out
       mvprintw(1,0,"0x%X 0x%X 0x%X 0x%X",((unsigned char*)(data_buf + 500))[0],
                ((unsigned char*)(data_buf + 500))[1],
                ((unsigned char*)(data_buf + 500))[2],
                ((unsigned char*)(data_buf + 500))[3]);
 
+      //Displaying the found value if it is above a threshold
       for(int j = 0;j < CAMERA_WIDTH;j++) {
-        out_tex_buf[((max_index[j] * CAMERA_WIDTH) + j) * 4 + 1] = 255;
+        if(max_value[j] > 14) {
+          out_tex_buf[((max_index[j] * CAMERA_WIDTH) + j) * 4 + 1] = 255;
+        }
       }
       textures[3].SetPixels(out_tex_buf);
       for(int j = 0;j < CAMERA_WIDTH;j++) {
-        out_tex_buf[((max_index[j] * CAMERA_WIDTH) + j) * 4 + 1] = 0;
+          out_tex_buf[((max_index[j] * CAMERA_WIDTH) + j) * 4 + 1] = 0;
       }
 
       EndFrame();
@@ -137,7 +142,7 @@ int main(int argc, const char **argv)
     int max = (new_time - old_time) / 1000;
     old_time = new_time;
 
-    mvprintw(0,0,"CURRENT mS/fame: %.2f",uspf = (uspf*.5 + max*.5));
+    mvprintw(0,0,"CURRENT fps: %.2f",1000.0 / (uspf = (uspf*.99 + max*.01)));
     refresh();
   }
 
