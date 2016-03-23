@@ -33,6 +33,8 @@ GLshort max_index[CAMERA_WIDTH];
 
 GLubyte out_tex_buf[CAMERA_WIDTH * CAMERA_HEIGHT * 4];
 
+FILE* out_fd;
+
 int main(int argc, const char **argv)
 {
   //Init the laser output
@@ -45,6 +47,9 @@ int main(int argc, const char **argv)
   //Setting up threads
   pthread_t laserthread;
   pthread_create(&laserthread, NULL, &laserloop, NULL);
+
+  //Setting up file output
+  out_fd = fopen("out.txt","a+");
 
   //init graphics and the camera
   InitGraphics();
@@ -126,12 +131,17 @@ int main(int argc, const char **argv)
       for(int j = 0;j < CAMERA_WIDTH;j++) {
         if(max_value[j] > 14) {
           out_tex_buf[((max_index[j] * CAMERA_WIDTH) + j) * 4 + 1] = 255;
+          fprintf(out_fd,"%i ",max_index[j]);
+        }
+        else {
+          fprintf(out_fd,"-1 ");
         }
       }
       textures[3].SetPixels(out_tex_buf);
       for(int j = 0;j < CAMERA_WIDTH;j++) {
           out_tex_buf[((max_index[j] * CAMERA_WIDTH) + j) * 4 + 1] = 0;
       }
+      fprintf(out_fd,"\n");
 
       EndFrame();
     }
@@ -148,6 +158,7 @@ int main(int argc, const char **argv)
 
   endwin();
   StopCamera();
+  fclose(out_fd);
   return 0;
 }
 
