@@ -14,11 +14,13 @@
 //how many detail levels (1 = just the capture res, > 1 goes down by half each level, 4 max)
 #define NUM_LEVELS 1
 
-#define FPS 30 
+#define FPS 30
 #define laser_freq FPS / 3
 #define laser_duty_cycle .4
 
 #define PIN RPI_GPIO_P1_11
+
+#define TIMEOUT 10
 
 void revokeRoot();
 void cleanup();
@@ -33,7 +35,7 @@ GLshort max_index[CAMERA_WIDTH];
 
 GLubyte out_tex_buf[CAMERA_WIDTH * CAMERA_HEIGHT * 4];
 
-FILE* out_fd;
+//FILE* out_fd;
 
 int main(int argc, const char **argv)
 {
@@ -49,7 +51,7 @@ int main(int argc, const char **argv)
   pthread_create(&laserthread, NULL, &laserloop, NULL);
 
   //Setting up file output
-  out_fd = fopen("out.txt","a+");
+  //out_fd = fopen("out.txt","a+");
 
   //init graphics and the camera
   InitGraphics();
@@ -131,17 +133,17 @@ int main(int argc, const char **argv)
       for(int j = 0;j < CAMERA_WIDTH;j++) {
         if(max_value[j] > 14) {
           out_tex_buf[((max_index[j] * CAMERA_WIDTH) + j) * 4 + 1] = 255;
-          fprintf(out_fd,"%i ",max_index[j]);
+          //fprintf(out_fd,"%i ",max_index[j]);
         }
         else {
-          fprintf(out_fd,"-1 ");
+          //fprintf(out_fd,"-1 ");
         }
       }
       textures[3].SetPixels(out_tex_buf);
       for(int j = 0;j < CAMERA_WIDTH;j++) {
           out_tex_buf[((max_index[j] * CAMERA_WIDTH) + j) * 4 + 1] = 0;
       }
-      fprintf(out_fd,"\n");
+      //fprintf(out_fd,"\n");
 
       EndFrame();
     }
@@ -158,7 +160,7 @@ int main(int argc, const char **argv)
 
   endwin();
   StopCamera();
-  fclose(out_fd);
+  //fclose(out_fd);
   return 0;
 }
 
@@ -167,6 +169,7 @@ void* laserloop(void *arg) {
   struct timeval tv;
   gettimeofday(&tv,NULL);
   unsigned long old_time = 1000000 * tv.tv_sec + tv.tv_usec;
+  unsigned long init_time = old_time;
 
   //Setting laser pin as output
   bcm2835_gpio_fsel(PIN, BCM2835_GPIO_FSEL_OUTP);
@@ -185,6 +188,10 @@ void* laserloop(void *arg) {
       usleep(old_time + time_diff - cur_time);
     }
     old_time += time_diff;
+
+    if(cur_time - init_time > 1000000L * TIMEOUT) {
+      //need_cleanup = 1;
+    }
   }
   bcm2835_gpio_write(PIN, LOW);
   return 0;
