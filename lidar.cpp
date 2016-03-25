@@ -113,7 +113,7 @@ int main(int argc, const char **argv)
         max_value[j] = 0;
         max_index[j] = -1;
       }
-      for(int i = 0;i < CAMERA_HEIGHT;i++) {
+      for(int i = 0;i < CAMERA_HEIGHT / 2;i++) {
         for(int j = 0;j < CAMERA_WIDTH;j++) {
           GLubyte value = data_buf[((i * CAMERA_WIDTH) + j) * 4];
           if(value > max_value[j]) {
