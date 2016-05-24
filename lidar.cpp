@@ -14,13 +14,19 @@
 //how many detail levels (1 = just the capture res, > 1 goes down by half each level, 4 max)
 #define NUM_LEVELS 1
 
+//raw FPS of the camera
 #define FPS 30
 #define laser_freq FPS / 3
 #define laser_duty_cycle .4
 
+//laser control pin
 #define PIN RPI_GPIO_P1_11
 
-#define TIMEOUT 10
+//distance to virtual camera plane (px)
+#define VD 633
+
+//physical height from camera to laser (mm)
+#define H 100
 
 void revokeRoot();
 void cleanup();
@@ -32,6 +38,10 @@ bool need_cleanup = false;
 GLubyte data_buf[CAMERA_WIDTH * CAMERA_HEIGHT * 4];
 GLubyte max_value[CAMERA_WIDTH];
 GLshort max_index[CAMERA_WIDTH];
+
+float xpos[CAMERA_WIDTH];
+float dpos[CAMERA_WIDTH];
+int pcount;
 
 GLubyte out_tex_buf[CAMERA_WIDTH * CAMERA_HEIGHT * 4];
 
@@ -130,9 +140,16 @@ int main(int argc, const char **argv)
                ((unsigned char*)(data_buf + 500))[3]);
 
       //Displaying the found value if it is above a threshold
+      //Also calculating actual positions
+      pcount = 0;
       for(int j = 0;j < CAMERA_WIDTH;j++) {
         if(max_value[j] > 14) {
           out_tex_buf[((max_index[j] * CAMERA_WIDTH) + j) * 4 + 1] = 255;
+          
+          dpos[pcount] = VD * H * 1.0f / (max_index[j] - CAMERA_HEIGHT / 2);
+          xpos[pcount] = dpos[pcount] * (j - CAMERA_WIDTH / 2) / VD;
+          pcount++;
+
           //fprintf(out_fd,"%i ",max_index[j]);
         }
         else {
@@ -188,10 +205,6 @@ void* laserloop(void *arg) {
       usleep(old_time + time_diff - cur_time);
     }
     old_time += time_diff;
-
-    if(cur_time - init_time > 1000000L * TIMEOUT) {
-      //need_cleanup = 1;
-    }
   }
   bcm2835_gpio_write(PIN, LOW);
   return 0;
