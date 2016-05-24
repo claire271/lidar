@@ -1,5 +1,9 @@
+#include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <fcntl.h>
+#include <termios.h>
+#include <string.h>
 #include <bcm2835.h>
 #include "camera.h"
 #include "graphics.h"
@@ -27,6 +31,9 @@
 
 //physical height from camera to laser (mm)
 #define H 100
+
+//output serial port
+#define PORT "/dev/ttyAMA0" 
 
 void revokeRoot();
 void cleanup();
@@ -59,6 +66,26 @@ int main(int argc, const char **argv)
   //Setting up threads
   pthread_t laserthread;
   pthread_create(&laserthread, NULL, &laserloop, NULL);
+
+  //Setting up serial output
+  struct termios tio;
+  int tty_fd;
+
+  memset(&tio,0,sizeof(tio));
+  tio.c_iflag=0;
+  tio.c_oflag=0;
+  tio.c_cflag=CS8|CREAD|CLOCAL;           // 8n1, see termios.h for more information
+  tio.c_lflag=0;
+  tio.c_cc[VMIN]=1;
+  tio.c_cc[VTIME]=5;
+  
+  tty_fd=open(PORT, O_RDWR | O_NONBLOCK);      
+  cfsetospeed(&tio,B115200);            // 115200 baud
+  cfsetispeed(&tio,B115200);            // 115200 baud
+  
+  tcsetattr(tty_fd,TCSANOW,&tio);
+
+  char c = ' ';
 
   //Setting up file output
   //out_fd = fopen("out.txt","a+");
@@ -141,6 +168,7 @@ int main(int argc, const char **argv)
 
       //Displaying the found value if it is above a threshold
       //Also calculating actual positions
+if (read(tty_fd,&c,1)>0)  write(tty_fd,&c,1);
       pcount = 0;
       for(int j = 0;j < CAMERA_WIDTH;j++) {
         if(max_value[j] > 14) {
@@ -178,6 +206,7 @@ int main(int argc, const char **argv)
   endwin();
   StopCamera();
   //fclose(out_fd);
+  close(tty_fd);
   return 0;
 }
 
