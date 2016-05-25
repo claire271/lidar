@@ -4,4 +4,4 @@
 !*.h
 !CMakeLists.txt
 !*.glsl
-
+!*.pde
