@@ -35,6 +35,9 @@
 //output serial port
 #define PORT "/dev/ttyAMA0" 
 
+//buffer for serial output
+unsigned char buf[1];
+
 void revokeRoot();
 void cleanup();
 void catch_SIGINT(int sig);
@@ -46,11 +49,14 @@ GLubyte data_buf[CAMERA_WIDTH * CAMERA_HEIGHT * 4];
 GLubyte max_value[CAMERA_WIDTH];
 GLshort max_index[CAMERA_WIDTH];
 
-float xpos[CAMERA_WIDTH];
-float dpos[CAMERA_WIDTH];
+short xpos[CAMERA_WIDTH];
+short dpos[CAMERA_WIDTH];
 int pcount;
 
 GLubyte out_tex_buf[CAMERA_WIDTH * CAMERA_HEIGHT * 4];
+
+unsigned short binToHex(unsigned char value);
+unsigned char hexToBin(unsigned short value);
 
 //FILE* out_fd;
 
@@ -168,20 +174,32 @@ int main(int argc, const char **argv)
 
       //Displaying the found value if it is above a threshold
       //Also calculating actual positions
-if (read(tty_fd,&c,1)>0)  write(tty_fd,&c,1);
+//if (read(tty_fd,&c,1)>0)  write(tty_fd,&c,1);
+//dprintf(tty_fd,"1");
       pcount = 0;
       for(int j = 0;j < CAMERA_WIDTH;j++) {
         if(max_value[j] > 14) {
           out_tex_buf[((max_index[j] * CAMERA_WIDTH) + j) * 4 + 1] = 255;
-          
-          dpos[pcount] = VD * H * 1.0f / (max_index[j] - CAMERA_HEIGHT / 2);
-          xpos[pcount] = dpos[pcount] * (j - CAMERA_WIDTH / 2) / VD;
-          pcount++;
 
+          buf[0] = max_index[j] - CAMERA_HEIGHT / 2;
+          write(tty_fd,buf,1);
+          
+          //Calculating actual position
+          //dpos[pcount] = VD * H * 1.0f / (max_index[j] - CAMERA_HEIGHT / 2);
+          //xpos[pcount] = dpos[pcount] * (j - CAMERA_WIDTH / 2) / VD;
+          //pcount++;
+
+          //Writing out position to serial port
+          //dprintf(tty_fd,"%i %i ",(int)xpos[pcount - 1],(int)dpos[pcount - 1]);
+
+          //write(tty_fd,buf,2);
+          
           //fprintf(out_fd,"%i ",max_index[j]);
         }
         else {
           //fprintf(out_fd,"-1 ");
+          buf[0] = 254;
+          write(tty_fd,buf,1);
         }
       }
       textures[3].SetPixels(out_tex_buf);
@@ -189,6 +207,9 @@ if (read(tty_fd,&c,1)>0)  write(tty_fd,&c,1);
           out_tex_buf[((max_index[j] * CAMERA_WIDTH) + j) * 4 + 1] = 0;
       }
       //fprintf(out_fd,"\n");
+      //dprintf(tty_fd,"\n");
+      buf[0] = 255;
+      write(tty_fd,buf,1);
 
       EndFrame();
     }
@@ -253,4 +274,21 @@ void revokeRoot()
 
   if (geteuid () == 0)                  // Running setuid root
     seteuid (getuid ()) ;               // Change effective uid to the uid of the caller
+}
+
+//In these two functions, the two ascii values are crammed into the short
+unsigned short binToHex(unsigned char value) {
+  unsigned char top = value >> 4;
+  unsigned char bottom = value & 0x0F;
+  unsigned short result;
+  ((char*)(&result))[1] = ((top <= 9) ? (top + '0') : (top + 'A' - 0x0A));
+  ((char*)(&result))[0] = ((bottom <= 9) ? (bottom + '0') : (bottom + 'A' - 0x0A));
+  return result;
+}
+
+unsigned char hexToBin(unsigned short value) {
+  unsigned char top = value >> 8;
+  unsigned char bottom = value & 0xFF;
+  return (((top <= '9') ? (top - '0') : (top - 'A' + 0x0A)) << 4) |
+    ((bottom <= '9') ? (bottom - '0') : (bottom - 'A' + 0x0A));
 }
