@@ -10,7 +10,10 @@ final int iheight = 480;
 final int scale = 2;
 final int GB = 63;
 
-Serial port;       
+Serial port;
+
+int prev = 0x00;
+boolean even = false;
 
 void setup() {
   // Open the port you are using at the rate you want:
@@ -42,8 +45,13 @@ void draw() {
   for(;;) {
     int input = port.read();
     if(input == -1) continue;
-    if(input == 255) break;
-    if(input != 254) {
+    if(prev == 255 && input == 255) {
+      prev = 0x00;
+      even = false;
+      break;
+    }
+    
+    if(!(prev == 255 && input == 254) && even) {
       if(input == 0) {
         input++;
       }
@@ -63,7 +71,13 @@ void draw() {
       pixels[(xpos + width/2) + (height - 1 - dpos) * width] = color(0, 255, 0);
       //pixels[i + (iheight / 2 + input) * width] = color(0, 255, 0);
     }
-    i++;
+    
+    prev = input;
+    if(even) {
+      i++;
+    }
+    even = !even;
   }
+  
   updatePixels();
 }
