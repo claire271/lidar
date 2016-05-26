@@ -36,7 +36,7 @@
 #define PORT "/dev/ttyAMA0" 
 
 //buffer for serial output
-unsigned char buf[1];
+unsigned char buf[2];
 
 void revokeRoot();
 void cleanup();
@@ -181,8 +181,12 @@ int main(int argc, const char **argv)
         if(max_value[j] > 14) {
           out_tex_buf[((max_index[j] * CAMERA_WIDTH) + j) * 4 + 1] = 255;
 
-          buf[0] = max_index[j] - CAMERA_HEIGHT / 2;
-          write(tty_fd,buf,1);
+          int output = max_index[j] - CAMERA_HEIGHT / 2;
+          if(output > 254) output = 254;
+
+          buf[0] = 0;
+          buf[1] = output;
+          write(tty_fd,buf,2);
           
           //Calculating actual position
           //dpos[pcount] = VD * H * 1.0f / (max_index[j] - CAMERA_HEIGHT / 2);
@@ -198,8 +202,9 @@ int main(int argc, const char **argv)
         }
         else {
           //fprintf(out_fd,"-1 ");
-          buf[0] = 254;
-          write(tty_fd,buf,1);
+          buf[0] = 255;
+          buf[1] = 254;
+          write(tty_fd,buf,2);
         }
       }
       textures[3].SetPixels(out_tex_buf);
@@ -209,7 +214,8 @@ int main(int argc, const char **argv)
       //fprintf(out_fd,"\n");
       //dprintf(tty_fd,"\n");
       buf[0] = 255;
-      write(tty_fd,buf,1);
+      buf[1] = 255;
+      write(tty_fd,buf,2);
 
       EndFrame();
     }
