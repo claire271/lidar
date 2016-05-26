@@ -35,6 +35,12 @@
 //output serial port
 #define PORT "/dev/ttyAMA0" 
 
+//detection half width of the stripe
+#define DHW 2
+
+//edge protection margin
+#define DM 3
+
 //buffer for serial output
 unsigned char buf[2];
 
@@ -46,8 +52,8 @@ void* laserloop(void *arg);
 bool need_cleanup = false;
 
 GLubyte data_buf[CAMERA_WIDTH * CAMERA_HEIGHT * 4];
-GLubyte max_value[CAMERA_WIDTH];
-GLshort max_index[CAMERA_WIDTH];
+short max_value[CAMERA_WIDTH];
+short max_index[CAMERA_WIDTH];
 
 short xpos[CAMERA_WIDTH];
 short dpos[CAMERA_WIDTH];
@@ -146,11 +152,16 @@ int main(int argc, const char **argv)
         max_value[j] = 0;
         max_index[j] = -1;
       }
-      for(int i = 0;i < CAMERA_HEIGHT / 2;i++) {
-        for(int j = 0;j < CAMERA_WIDTH;j++) {
-          GLubyte value = data_buf[((i * CAMERA_WIDTH) + j) * 4];
-          if(value > max_value[j]) {
-            max_value[j] = value;
+      for(int j = 0;j < CAMERA_WIDTH;j++) {
+        short total = 0;
+        for(int k = DM - DHW - 1;k <= DM + DHW - 1;k++) {
+          total += data_buf[((k * CAMERA_WIDTH) + j) * 4];
+        }
+        for(int i = DM;i < CAMERA_HEIGHT / 2 - DM;i++) {
+          total -= data_buf[(((i - DHW - 1) * CAMERA_WIDTH) + j) * 4];
+          total += data_buf[(((i + DHW) * CAMERA_WIDTH) + j) * 4];
+          if(total > max_value[j]) {
+            max_value[j] = total;
             max_index[j] = CAMERA_HEIGHT - i - 1;
           }
         }
@@ -166,7 +177,7 @@ int main(int argc, const char **argv)
       //Also output to serial port
       pcount = 0;
       for(int j = 0;j < CAMERA_WIDTH;j++) {
-        if(max_value[j] > 14) {
+        if(max_value[j] > 90) {
           out_tex_buf[((max_index[j] * CAMERA_WIDTH) + j) * 4 + 1] = 255;
 
           int output = max_index[j] - CAMERA_HEIGHT / 2;
