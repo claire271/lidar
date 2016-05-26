@@ -13,13 +13,12 @@ final int GB = 63;
 Serial port;
 
 int prev = 0x00;
-boolean even = false;
 
 void setup() {
   // Open the port you are using at the rate you want:
   port = new Serial(this, "/dev/ttyUSB0", 115200);
   size(800,600);
-  frameRate(10);
+  frameRate(9);
   
   loadPixels();
 }
@@ -41,23 +40,20 @@ void draw() {
     }
   }
   
-  int i = 0;
-  for(;;) {
+  prev = 0x00;
+  for(int j = 0;j < iwidth * 2 + 10;j++) {
+    while(port.available() == 0); //print("w");
+    //print("t");
     int input = port.read();
-    if(input == -1) continue;
     if(prev == 255 && input == 255) {
-      prev = 0x00;
-      even = false;
+      //print("o");
       break;
     }
     
-    if(!(prev == 255 && input == 254) && even) {
-      if(input == 0) {
-        input++;
-      }
-      
-      int dpos = VD * H / input;
-      int xpos = dpos * (i - iwidth / 2) / VD;
+    if(!(prev == 255 && input == 254) && j%2 > 0) {
+      float value = input + prev / 256;
+      float dpos = VD * H / value;
+      float xpos = dpos * (j/2 - iwidth / 2) / VD;
       
       xpos /= scale;
       dpos /= scale;
@@ -68,16 +64,12 @@ void draw() {
       if(dpos < 0) dpos = 0;
       if(dpos > height-1) dpos = height-1;
       
-      pixels[(xpos + width/2) + (height - 1 - dpos) * width] = color(0, 255, 0);
-      //pixels[i + (iheight / 2 + input) * width] = color(0, 255, 0);
+      pixels[((int)xpos + width/2) + (height - 1 - (int)dpos) * width] = color(0, 255, 0);
+      //pixels[j/2 + (iheight / 2 + input) * width] = color(0, 255, 0);
     }
-    
     prev = input;
-    if(even) {
-      i++;
-    }
-    even = !even;
   }
   
+  //print(".");
   updatePixels();
 }
