@@ -44,6 +44,9 @@
 //buffer for serial output
 unsigned char buf[2];
 
+//buffer for subpixel peak detection
+short spbuf[7];
+
 void revokeRoot();
 void cleanup();
 void catch_SIGINT(int sig);
@@ -173,13 +176,32 @@ int main(int argc, const char **argv)
       pcount = 0;
       for(int j = 0;j < CAMERA_WIDTH;j++) {
         if(max_value[j] > 14) {
-          out_tex_buf[((max_index[j] * CAMERA_WIDTH) + j) * 4 + 1] = 255;
+          //Running subpixel peak detection
+          //Blais and Rioux Detectors
+          for(int i = 0;i < 7;i++) {
+            spbuf[i] = data_buf[(((max_index[j] + i - 3) * CAMERA_WIDTH) + j) * 4];
+          }
 
-          int output = max_index[j] - CAMERA_HEIGHT / 2;
+          float location = max_index[j];
+          if(spbuf[4] > spbuf[2]) {
+            location += 1.0 * (-spbuf[5] - spbuf[4] + spbuf[2] + spbuf[1]) /
+              (spbuf[6] - spbuf[4] - spbuf[3] + spbuf[1]);
+          }
+          else {
+            location += (1.0 * (-spbuf[4] - spbuf[3] + spbuf[1] + spbuf[0]) /
+              (spbuf[5] - spbuf[3] - spbuf[2] + spbuf[0])) - 1.0;
+          }
+
+          //Diagnostics display
+          out_tex_buf[((max_index[j] * CAMERA_WIDTH) + j) * 4 + 1] = 255;
+          //out_tex_buf[(((int)location * CAMERA_WIDTH) + j) * 4 + 1] = 255;
+
+          //int output = max_index[j] - CAMERA_HEIGHT / 2;
+          float output = location - CAMERA_HEIGHT / 2;
           if(output > 254) output = 254;
 
-          buf[0] = 0;
-          buf[1] = output;
+          buf[0] = (int)(output * 256);
+          buf[1] = (int)(output);
           write(tty_fd,buf,2);
         }
         else {
