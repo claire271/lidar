@@ -153,19 +153,10 @@ int main(int argc, const char **argv)
         max_index[j] = -1;
       }
       for(int j = 0;j < CAMERA_WIDTH;j++) {
-        short total = 0;
-        for(int k = DM - DHW - 1;k <= DM + DHW - 1;k++) {
-          total += data_buf[((k * CAMERA_WIDTH) + j) * 4];
-        }
         for(int i = DM;i < CAMERA_HEIGHT / 2 - DM;i++) {
-          total -= data_buf[(((i - DHW - 1) * CAMERA_WIDTH) + j) * 4];
-          total += data_buf[(((i + DHW) * CAMERA_WIDTH) + j) * 4];
-
-          short total2 = total;
-          total2 -= data_buf[(((i - DHW - 1) * CAMERA_WIDTH) + j) * 4];
-          total2 -= data_buf[(((i + DHW + 1) * CAMERA_WIDTH) + j) * 4];
-          if(total2 > max_value[j]) {
-            max_value[j] = total2;
+          short value = data_buf[((i * CAMERA_WIDTH) + j) * 4 + 2];
+          if(value > max_value[j]) {
+            max_value[j] = value;
             max_index[j] = CAMERA_HEIGHT - i - 1;
           }
         }
@@ -181,7 +172,7 @@ int main(int argc, const char **argv)
       //Also output to serial port
       pcount = 0;
       for(int j = 0;j < CAMERA_WIDTH;j++) {
-        if(max_value[j] > 40) {
+        if(max_value[j] > 14) {
           out_tex_buf[((max_index[j] * CAMERA_WIDTH) + j) * 4 + 1] = 255;
 
           int output = max_index[j] - CAMERA_HEIGHT / 2;
