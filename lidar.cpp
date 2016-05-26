@@ -36,7 +36,7 @@
 #define PORT "/dev/ttyAMA0" 
 
 //detection half width of the stripe
-#define DHW 2
+#define DHW 1
 
 //edge protection margin
 #define DM 3
@@ -160,8 +160,12 @@ int main(int argc, const char **argv)
         for(int i = DM;i < CAMERA_HEIGHT / 2 - DM;i++) {
           total -= data_buf[(((i - DHW - 1) * CAMERA_WIDTH) + j) * 4];
           total += data_buf[(((i + DHW) * CAMERA_WIDTH) + j) * 4];
-          if(total > max_value[j]) {
-            max_value[j] = total;
+
+          short total2 = total;
+          total2 -= data_buf[(((i - DHW - 1) * CAMERA_WIDTH) + j) * 4];
+          total2 -= data_buf[(((i + DHW + 1) * CAMERA_WIDTH) + j) * 4];
+          if(total2 > max_value[j]) {
+            max_value[j] = total2;
             max_index[j] = CAMERA_HEIGHT - i - 1;
           }
         }
@@ -177,7 +181,7 @@ int main(int argc, const char **argv)
       //Also output to serial port
       pcount = 0;
       for(int j = 0;j < CAMERA_WIDTH;j++) {
-        if(max_value[j] > 90) {
+        if(max_value[j] > 40) {
           out_tex_buf[((max_index[j] * CAMERA_WIDTH) + j) * 4 + 1] = 255;
 
           int output = max_index[j] - CAMERA_HEIGHT / 2;
