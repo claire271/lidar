@@ -121,12 +121,12 @@ int main(int argc, const char **argv)
   float uspf = 33;
 
   //Init ncurses
-  initscr();      /* initialize the curses library */
-  keypad(stdscr, TRUE);  /* enable keyboard mapping */
-  nonl();         /* tell curses not to do NL->CR/NL on output */
-  cbreak();       /* take input chars one at a time, no wait for \n */
-  clear();
-  nodelay(stdscr, TRUE);
+  //initscr();      /* initialize the curses library */
+  //keypad(stdscr, TRUE);  /* enable keyboard mapping */
+  //nonl();         /* tell curses not to do NL->CR/NL on output */
+  //cbreak();       /* take input chars one at a time, no wait for \n */
+  //clear();
+  //nodelay(stdscr, TRUE);
 
   unsigned char cur_frame = 0;
 
@@ -166,10 +166,10 @@ int main(int argc, const char **argv)
       }
 
       //Test print out
-      mvprintw(1,0,"0x%X 0x%X 0x%X 0x%X",((unsigned char*)(data_buf + 500))[0],
-               ((unsigned char*)(data_buf + 500))[1],
-               ((unsigned char*)(data_buf + 500))[2],
-               ((unsigned char*)(data_buf + 500))[3]);
+      //mvprintw(1,0,"0x%X 0x%X 0x%X 0x%X",((unsigned char*)(data_buf + 500))[0],
+               //((unsigned char*)(data_buf + 500))[1],
+               //((unsigned char*)(data_buf + 500))[2],
+               //((unsigned char*)(data_buf + 500))[3]);
 
       //Displaying the found value if it is above a threshold
       //Also output to serial port
@@ -177,19 +177,38 @@ int main(int argc, const char **argv)
       for(int j = 0;j < CAMERA_WIDTH;j++) {
         if(max_value[j] > 14) {
           //Running subpixel peak detection
-          //Blais and Rioux Detectors
+          
+          //COM7
+          float total = 0;
           for(int i = 0;i < 7;i++) {
             spbuf[i] = data_buf[(((max_index[j] + i - 3) * CAMERA_WIDTH) + j) * 4];
+            total += spbuf[i];
           }
 
-          float location = max_index[j];
+          float offset = 0;
+          offset = (3 * spbuf[6] + 2 * spbuf[5] + spbuf[4] - spbuf[2] - 2 * spbuf[1] - 3 * spbuf[0]) / total;
+          //Blais and Rioux Detectors
+          /*
           if(spbuf[4] > spbuf[2]) {
-            location += 1.0 * (-spbuf[5] - spbuf[4] + spbuf[2] + spbuf[1]) /
+            offset = 1.0 * (-spbuf[5] - spbuf[4] + spbuf[2] + spbuf[1]) /
               (spbuf[6] - spbuf[4] - spbuf[3] + spbuf[1]);
           }
           else {
-            location += (1.0 * (-spbuf[4] - spbuf[3] + spbuf[1] + spbuf[0]) /
+            offset = (1.0 * (-spbuf[4] - spbuf[3] + spbuf[1] + spbuf[0]) /
               (spbuf[5] - spbuf[3] - spbuf[2] + spbuf[0])) - 1.0;
+          }
+          */
+
+          //printf("%f, ",offset);
+
+          if(offset >= 1 || offset <= -1) {
+            offset += 0;
+          }
+
+          float location = max_index[j];
+
+          if(offset >= -1 && offset <= 1) {
+            //location += offset;
           }
 
           //Diagnostics display
@@ -200,8 +219,9 @@ int main(int argc, const char **argv)
           float output = location - CAMERA_HEIGHT / 2;
           if(output > 254) output = 254;
 
-          buf[0] = (int)(output * 256);
           buf[1] = (int)(output);
+          //buf[0] = (int)((output - buf[1]) * 256);
+          buf[0] = 0;
           write(tty_fd,buf,2);
         }
         else {
@@ -226,8 +246,8 @@ int main(int argc, const char **argv)
     int max = (new_time - old_time) / 1000;
     old_time = new_time;
 
-    mvprintw(0,0,"CURRENT fps: %.2f",1000.0 / (uspf = (uspf*.99 + max*.01)));
-    refresh();
+    //mvprintw(0,0,"CURRENT fps: %.2f",1000.0 / (uspf = (uspf*.99 + max*.01)));
+    //refresh();
   }
 
   endwin();
