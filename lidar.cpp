@@ -7,7 +7,7 @@
 #include <bcm2835.h>
 #include "camera.h"
 #include "graphics.h"
-#include <ncurses.h>
+//#include <ncurses.h>
 #include <sys/time.h>
 #include <pthread.h>
 #include <signal.h>
@@ -24,7 +24,7 @@
 #define laser_duty_cycle .4
 
 //laser control pin
-#define PIN RPI_GPIO_P1_11
+#define PIN RPI_GPIO_P1_12
 
 //distance to virtual camera plane (px)
 #define VD 633
@@ -179,6 +179,7 @@ int main(int argc, const char **argv)
           //Running subpixel peak detection
           
           //COM7
+          /*
           float total = 0;
           for(int i = 0;i < 7;i++) {
             spbuf[i] = data_buf[(((max_index[j] + i - 3) * CAMERA_WIDTH) + j) * 4];
@@ -187,6 +188,7 @@ int main(int argc, const char **argv)
 
           float offset = 0;
           offset = (3 * spbuf[6] + 2 * spbuf[5] + spbuf[4] - spbuf[2] - 2 * spbuf[1] - 3 * spbuf[0]) / total;
+          */
           //Blais and Rioux Detectors
           /*
           if(spbuf[4] > spbuf[2]) {
@@ -201,15 +203,17 @@ int main(int argc, const char **argv)
 
           //printf("%f, ",offset);
 
+          /*
           if(offset >= 1 || offset <= -1) {
             offset += 0;
           }
 
-          float location = max_index[j];
-
           if(offset >= -1 && offset <= 1) {
             //location += offset;
           }
+          */
+
+          float location = max_index[j];
 
           //Diagnostics display
           out_tex_buf[((max_index[j] * CAMERA_WIDTH) + j) * 4 + 1] = 255;
@@ -219,15 +223,23 @@ int main(int argc, const char **argv)
           float output = location - CAMERA_HEIGHT / 2;
           if(output > 254) output = 254;
 
-          buf[1] = (int)(output);
+          //buf[1] = (int)(output);
           //buf[0] = (int)((output - buf[1]) * 256);
-          buf[0] = 0;
-          write(tty_fd,buf,2);
+          buf[0] = (int)(output);
+          //buf[0] = 0;
+          //buf[1] = '.';
+          //buf[0] = ',';
+          //printf(".");
+          write(tty_fd,buf,1);
         }
         else {
-          buf[0] = 255;
-          buf[1] = 254;
-          write(tty_fd,buf,2);
+          //buf[0] = 255;
+          //buf[1] = 254;
+          //buf[0] = '-';
+          //buf[1] = '_';
+          buf[0] = 254;
+          //printf("-");
+          write(tty_fd,buf,1);
         }
       }
       textures[3].SetPixels(out_tex_buf);
@@ -235,8 +247,11 @@ int main(int argc, const char **argv)
           out_tex_buf[((max_index[j] * CAMERA_WIDTH) + j) * 4 + 1] = 0;
       }
       buf[0] = 255;
-      buf[1] = 255;
-      write(tty_fd,buf,2);
+      //buf[1] = 255;
+      //buf[0] = '\n';
+      //buf[1] = '\r';
+      //printf("\n");
+      write(tty_fd,buf,1);
 
       EndFrame();
     }
@@ -247,10 +262,11 @@ int main(int argc, const char **argv)
     old_time = new_time;
 
     //mvprintw(0,0,"CURRENT fps: %.2f",1000.0 / (uspf = (uspf*.99 + max*.01)));
+    //printf("CURRENT fps: %.2f",1000.0 / (uspf = (uspf*.99 + max*.01)));
     //refresh();
   }
 
-  endwin();
+  //endwin();
   StopCamera();
   close(tty_fd);
   return 0;
