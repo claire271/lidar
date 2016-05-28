@@ -288,6 +288,9 @@ void DrawTextureRect(GfxTexture* textures, GLvoid* data)
 	glUniform1i(glGetUniformLocation(GSimpleProg.GetId(),"tex2"), 1);
 	glUniform1i(glGetUniformLocation(GSimpleProg.GetId(),"tex3"), 2);
 	glUniform1i(glGetUniformLocation(GSimpleProg.GetId(),"tex4"), 3);
+
+	glUniform1f(glGetUniformLocation(GSimpleProg.GetId(),"width"),CAMERA_WIDTH);
+	glUniform1f(glGetUniformLocation(GSimpleProg.GetId(),"height"),CAMERA_HEIGHT);
 	check();
 
 	glBindBuffer(GL_ARRAY_BUFFER, GQuadVertexBuffer);
