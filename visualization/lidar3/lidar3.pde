@@ -7,12 +7,10 @@ final int H = 100;
 final int iwidth = 640;
 final int iheight = 480;
 
-final int scale = 2;
+final int scale = 5;
 final int GB = 63;
 
-Serial port;
-
-int prev = 0x00;
+Serial port;       
 
 void setup() {
   // Open the port you are using at the rate you want:
@@ -40,22 +38,15 @@ void draw() {
     }
   }
   
-  prev = 0x00;
-  for(int j = 0;j < iwidth * 2 + 10;j++) {
-    while(port.available() == 0); //print("w");
-    //print("t");
+  int i = 0;
+  for(;;) {
     int input = port.read();
-    if(prev == 255 && input == 255) {
-      print("o");
-      break;
-    }
-    
-    if(!(prev == 255 && input == 254) && j%2 > 0) {
-      float value = input + prev / 256;
+    if(input == -1) continue;
+    if(input == 255) break;
+    if(input != 254) {
+      float value = input;
       float dpos = VD * H / value;
-      float xpos = dpos * (j/2 - iwidth / 2) / VD;
-      
-      //print(value);
+      float xpos = dpos * (i - iwidth / 2) / VD;
       
       xpos /= scale;
       dpos /= scale;
@@ -66,12 +57,9 @@ void draw() {
       if(dpos < 0) dpos = 0;
       if(dpos > height-1) dpos = height-1;
       
-      //pixels[((int)xpos + width/2) + (height - 1 - (int)dpos) * width] = color(0, 255, 0);
-      pixels[j/2 + (iheight / 2 + input) * width] = color(0, 255, 0);
+      pixels[((int)xpos + width/2) + (height - 1 - (int)dpos) * width] = color(0, 255, 0);
     }
-    prev = input;
+    i++;
   }
-  
-  print(".");
   updatePixels();
 }
