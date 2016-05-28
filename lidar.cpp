@@ -228,16 +228,16 @@ int main(int argc, const char **argv)
           buf[0] = (int)(output);
           //buf[0] = 0;
           //buf[1] = '.';
-          //buf[0] = ',';
+          //buf[0] = '.';
           //printf(".");
           write(tty_fd,buf,1);
         }
         else {
           //buf[0] = 255;
           //buf[1] = 254;
-          //buf[0] = '-';
           //buf[1] = '_';
           buf[0] = 254;
+          //buf[0] = '-';
           //printf("-");
           write(tty_fd,buf,1);
         }
