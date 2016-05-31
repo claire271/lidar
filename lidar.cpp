@@ -69,7 +69,6 @@ int main(int argc, const char **argv)
   //Init the laser output
   if(!bcm2835_init())
     return 1;
-  revokeRoot();
 
   signal(SIGINT, catch_SIGINT);
 
@@ -94,6 +93,8 @@ int main(int argc, const char **argv)
   cfsetispeed(&tio,B115200);            // 115200 baud
   
   tcsetattr(tty_fd,TCSANOW,&tio);
+
+  revokeRoot();
 
   //init graphics and the camera
   InitGraphics();
