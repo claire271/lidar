@@ -20,7 +20,7 @@ float f3(vec2 pos) {
 }
 
 float color_sub(vec4 color) {
-  float value = color.r - 0.5 * color.g - 0.5 * color.b;
+  float value = color.r - 0.25 * color.g - 0.25 * color.b;
   return clamp(value,0.0,1.0);
 }
 
@@ -68,15 +68,21 @@ void main(void)
   */
   //res.r = tex1vt2.r + tex1vt1.r - tex1vb1.r - tex1vb2.r + 0.5;
   res.r =
-    -color_sub(tex1vt2) + color_sub(tex1vt1) +
-    color_sub(tex1v) +
-    color_sub(tex1vb1) + -color_sub(tex1vb2);
+    -color_sub(tex1vt2) +
+    2.0 * color_sub(tex1v) +
+    -color_sub(tex1vb2);
+  res.g = res.r;
+  res.b = res.r;
+  //res.r = (color_sub(tex1vt1) - color_sub(tex1v)) * 5.0 + 0.5;
+  //res.g = res.r;
+  //res.b = res.r;
+  res = tex1v;
   //res.g = res.r;
   //res.b = res.r;
 
   //res.g = tex2vb1.r - tex2vt1.r;
   vec4 tex4v = texture2D(tex4,tcoord.xy + vec2(0,0));
-  res.g = tex4v.g;
+  //res.g = tex4v.g;
   res.a = 1.0;
 
   gl_FragColor = clamp(res,vec4(0),vec4(1));
