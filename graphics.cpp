@@ -288,6 +288,7 @@ void DrawTextureRect(GfxTexture* textures, GLvoid* data)
 	glUniform1i(glGetUniformLocation(GSimpleProg.GetId(),"tex2"), 1);
 	glUniform1i(glGetUniformLocation(GSimpleProg.GetId(),"tex3"), 2);
 	glUniform1i(glGetUniformLocation(GSimpleProg.GetId(),"tex4"), 3);
+	glUniform1i(glGetUniformLocation(GSimpleProg.GetId(),"tex5"), 4);
 
 	glUniform1f(glGetUniformLocation(GSimpleProg.GetId(),"width"),CAMERA_WIDTH);
 	glUniform1f(glGetUniformLocation(GSimpleProg.GetId(),"height"),CAMERA_HEIGHT);
@@ -304,6 +305,8 @@ void DrawTextureRect(GfxTexture* textures, GLvoid* data)
 	glBindTexture(GL_TEXTURE_2D,(textures + 2)->GetId());	check();
 	glActiveTexture(GL_TEXTURE3);
 	glBindTexture(GL_TEXTURE_2D,(textures + 3)->GetId());	check();
+	glActiveTexture(GL_TEXTURE4);
+	glBindTexture(GL_TEXTURE_2D,(textures + 4)->GetId());	check();
 
 	GLuint loc = glGetAttribLocation(GSimpleProg.GetId(),"vertex");
 	check();

@@ -101,8 +101,8 @@ int main(int argc, const char **argv)
   InitGraphics();
   CCamera* cam = StartCamera(CAMERA_WIDTH, CAMERA_HEIGHT,FPS,NUM_LEVELS,DO_ARGB_CONVERSION);
 
-  GfxTexture textures[4];
-  for(int i = 0;i < 4;i++) {
+  GfxTexture textures[5];
+  for(int i = 0;i < 5;i++) {
     textures[i].Create(CAMERA_WIDTH,CAMERA_HEIGHT);
   }
 
@@ -180,7 +180,7 @@ int main(int argc, const char **argv)
       pcount = 0;
       for(int j = 0;j < CAMERA_WIDTH;j++) {
         //if(max_value[j] > (25.0 / 640) * totals[j]) {
-        if(max_value[j] > 16) {
+        if(max_value[j] > 12) {
           //Running subpixel peak detection
           
           //COM7
@@ -251,6 +251,7 @@ int main(int argc, const char **argv)
       for(int j = 0;j < CAMERA_WIDTH;j++) {
           out_tex_buf[((max_index[j] * CAMERA_WIDTH) + j) * 4 + 1] = 0;
       }
+      textures[4].SetPixels(data_buf);
       buf[0] = 255;
       //buf[1] = 255;
       //buf[0] = '\n';
