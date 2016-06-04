@@ -287,10 +287,10 @@ void* laserloop(void *arg) {
   //Setting laser pin as output
   bcm2835_gpio_fsel(PIN, BCM2835_GPIO_FSEL_OUTP);
 
-  bool laser_state = false;
+  bool laser_state = true;
 
   for(;!need_cleanup;) {
-    laser_state = !laser_state;
+    //laser_state = !laser_state;
     bcm2835_gpio_write(PIN, laser_state ? HIGH : LOW);
 
     //Timer loop code

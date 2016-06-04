@@ -24,6 +24,7 @@ void main(void)
   //Only once declarations
   vec4 res;
   
+  /*
   res.r = f3(tcoord);
 
   //Calculating sharpened
@@ -40,6 +41,15 @@ void main(void)
   //Diagnostics output
   vec4 tex4v = texture2D(tex4,tcoord.xy + vec2(0,0));
   res.g = tex4v.g;
+  res.a = 1.0;
+  */
+
+  vec4 tex1vt = texture2D(tex1,tcoord - vec2(0,1.0/height));
+  vec4 tex1vb = texture2D(tex1,tcoord + vec2(0,1.0/height));
+
+  res.r = tex1vt.r - tex1vb.r + 0.5;
+  res.g = res.r;
+  res.b = res.r;
   res.a = 1.0;
 
   gl_FragColor = clamp(res,vec4(0),vec4(1));
