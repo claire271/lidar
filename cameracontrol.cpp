@@ -406,6 +406,22 @@ int raspicamcontrol_set_awb_mode(MMAL_COMPONENT_T *camera, MMAL_PARAM_AWBMODE_T 
    return mmal_status_to_int(mmal_port_parameter_set(camera->control, &param.hdr));
 }
 
+int raspicamcontrol_set_awb_gains(MMAL_COMPONENT_T *camera, float r_gain, float b_gain)
+{
+   MMAL_PARAMETER_AWB_GAINS_T param = {{MMAL_PARAMETER_CUSTOM_AWB_GAINS,sizeof(param)}, {0,0}, {0,0}};
+
+   if (!camera)
+      return 1;
+
+   if (!r_gain || !b_gain)
+      return 0;
+
+   param.r_gain.num = (unsigned int)(r_gain * 65536);
+   param.b_gain.num = (unsigned int)(b_gain * 65536);
+   param.r_gain.den = param.b_gain.den = 65536;
+   return mmal_status_to_int(mmal_port_parameter_set(camera->control, &param.hdr));
+}
+
 /**
  * Set the image effect for the images
  * @param camera Pointer to camera component

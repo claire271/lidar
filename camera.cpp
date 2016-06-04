@@ -182,6 +182,18 @@ MMAL_COMPONENT_T* CCamera::CreateCameraComponentAndSetupPorts()
 	//apply all camera parameters
 	raspicamcontrol_set_all_parameters(camera, &CameraParameters);
 
+    //Set other settings
+    raspicamcontrol_set_exposure_mode(camera, MMAL_PARAM_EXPOSUREMODE_OFF);
+    raspicamcontrol_set_awb_mode(camera, MMAL_PARAM_AWBMODE_OFF);
+    raspicamcontrol_set_imageFX(camera, MMAL_PARAM_IMAGEFX_NONE);
+
+    raspicamcontrol_set_sharpness(camera, 0);
+    raspicamcontrol_set_contrast(camera, 0);
+    raspicamcontrol_set_brightness(camera, 50);
+    raspicamcontrol_set_saturation(camera, 0);
+    raspicamcontrol_set_ISO(camera, 400);
+    raspicamcontrol_set_awb_gains(camera, 1.0, 1.0);
+
 	//enable the camera
 	status = mmal_component_enable(camera);
 	if (status != MMAL_SUCCESS)
