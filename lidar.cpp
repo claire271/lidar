@@ -7,7 +7,7 @@
 #include <bcm2835.h>
 #include "camera.h"
 #include "graphics.h"
-//#include <ncurses.h>
+#include <ncurses.h>
 #include <sys/time.h>
 #include <pthread.h>
 #include <signal.h>
@@ -34,9 +34,6 @@
 
 //output serial port
 #define PORT "/dev/ttyAMA0" 
-
-//detection half width of the stripe
-#define DHW 1
 
 //edge protection margin
 #define DM 3
@@ -123,12 +120,12 @@ int main(int argc, const char **argv)
   float uspf = 33;
 
   //Init ncurses
-  //initscr();      /* initialize the curses library */
-  //keypad(stdscr, TRUE);  /* enable keyboard mapping */
-  //nonl();         /* tell curses not to do NL->CR/NL on output */
-  //cbreak();       /* take input chars one at a time, no wait for \n */
-  //clear();
-  //nodelay(stdscr, TRUE);
+  initscr();      /* initialize the curses library */
+  keypad(stdscr, TRUE);  /* enable keyboard mapping */
+  nonl();         /* tell curses not to do NL->CR/NL on output */
+  cbreak();       /* take input chars one at a time, no wait for \n */
+  clear();
+  nodelay(stdscr, TRUE);
 
   unsigned char cur_frame = 0;
 
@@ -181,69 +178,17 @@ int main(int argc, const char **argv)
       for(int j = 0;j < CAMERA_WIDTH;j++) {
         //if(max_value[j] > (25.0 / 640) * totals[j]) {
         if(max_value[j] > 12) {
-          //Running subpixel peak detection
-          
-          //COM7
-          /*
-          float total = 0;
-          for(int i = 0;i < 7;i++) {
-            spbuf[i] = data_buf[(((max_index[j] + i - 3) * CAMERA_WIDTH) + j) * 4];
-            total += spbuf[i];
-          }
-
-          float offset = 0;
-          offset = (3 * spbuf[6] + 2 * spbuf[5] + spbuf[4] - spbuf[2] - 2 * spbuf[1] - 3 * spbuf[0]) / total;
-          */
-          //Blais and Rioux Detectors
-          /*
-          if(spbuf[4] > spbuf[2]) {
-            offset = 1.0 * (-spbuf[5] - spbuf[4] + spbuf[2] + spbuf[1]) /
-              (spbuf[6] - spbuf[4] - spbuf[3] + spbuf[1]);
-          }
-          else {
-            offset = (1.0 * (-spbuf[4] - spbuf[3] + spbuf[1] + spbuf[0]) /
-              (spbuf[5] - spbuf[3] - spbuf[2] + spbuf[0])) - 1.0;
-          }
-          */
-
-          //printf("%f, ",offset);
-
-          /*
-          if(offset >= 1 || offset <= -1) {
-            offset += 0;
-          }
-
-          if(offset >= -1 && offset <= 1) {
-            //location += offset;
-          }
-          */
-
-          float location = max_index[j];
-
           //Diagnostics display
           out_tex_buf[((max_index[j] * CAMERA_WIDTH) + j) * 4 + 1] = 255;
-          //out_tex_buf[(((int)location * CAMERA_WIDTH) + j) * 4 + 1] = 255;
 
-          //int output = max_index[j] - CAMERA_HEIGHT / 2;
-          float output = location - CAMERA_HEIGHT / 2;
+          int output = max_index[j] - CAMERA_HEIGHT / 2;
           if(output > 254) output = 254;
 
-          //buf[1] = (int)(output);
-          //buf[0] = (int)((output - buf[1]) * 256);
           buf[0] = (int)(output);
-          //buf[0] = 0;
-          //buf[1] = '.';
-          //buf[0] = '.';
-          //printf(".");
           write(tty_fd,buf,1);
         }
         else {
-          //buf[0] = 255;
-          //buf[1] = 254;
-          //buf[1] = '_';
           buf[0] = 254;
-          //buf[0] = '-';
-          //printf("-");
           write(tty_fd,buf,1);
         }
       }
@@ -253,10 +198,6 @@ int main(int argc, const char **argv)
       }
       textures[4].SetPixels(data_buf);
       buf[0] = 255;
-      //buf[1] = 255;
-      //buf[0] = '\n';
-      //buf[1] = '\r';
-      //printf("\n");
       write(tty_fd,buf,1);
 
       EndFrame();
@@ -267,12 +208,12 @@ int main(int argc, const char **argv)
     int max = (new_time - old_time) / 1000;
     old_time = new_time;
 
-    //mvprintw(0,0,"CURRENT fps: %.2f",1000.0 / (uspf = (uspf*.99 + max*.01)));
+    mvprintw(0,0,"CURRENT fps: %.2f",1000.0 / (uspf = (uspf*.99 + max*.01)));
     //printf("CURRENT fps: %.2f",1000.0 / (uspf = (uspf*.99 + max*.01)));
-    //refresh();
+    refresh();
   }
 
-  //endwin();
+  endwin();
   StopCamera();
   close(tty_fd);
   return 0;
