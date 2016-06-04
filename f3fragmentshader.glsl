@@ -44,10 +44,19 @@ void main(void)
   res.a = 1.0;
   */
 
-  vec4 tex1vt = texture2D(tex1,tcoord - vec2(0,1.0/height));
-  vec4 tex1vb = texture2D(tex1,tcoord + vec2(0,1.0/height));
+  vec4 tex1vt3 = texture2D(tex1,tcoord - vec2(0,3.0/height));
+  vec4 tex1vt2 = texture2D(tex1,tcoord - vec2(0,2.0/height));
+  vec4 tex1vt1 = texture2D(tex1,tcoord - vec2(0,1.0/height));
+  vec4 tex1v = texture2D(tex1,tcoord);
+  vec4 tex1vb1 = texture2D(tex1,tcoord + vec2(0,1.0/height));
+  vec4 tex1vb2 = texture2D(tex1,tcoord + vec2(0,2.0/height));
+  vec4 tex1vb3 = texture2D(tex1,tcoord + vec2(0,3.0/height));
 
-  res.r = tex1vt.r - tex1vb.r + 0.5;
+  res.r =
+    -0.0 * tex1vt3.r + -2.0 * tex1vt2.r +
+    2.0 * tex1vt1.r + 3.0 * tex1v.r + 2.0 * tex1vb1.r +
+    -2.0 * tex1vb2.r + -0.0 * tex1vt3.r;
+  res.r /= 9.0;
   res.g = res.r;
   res.b = res.r;
   res.a = 1.0;

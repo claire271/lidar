@@ -160,7 +160,7 @@ int main(int argc, const char **argv)
       }
       for(int j = 0;j < CAMERA_WIDTH;j++) {
         for(int i = DM;i < CAMERA_HEIGHT / 2 - DM;i++) {
-          short value = data_buf[((i * CAMERA_WIDTH) + j) * 4 + 2];
+          short value = data_buf[((i * CAMERA_WIDTH) + j) * 4 + 0];
           totals[j] += value;
           if(value > max_value[j]) {
             max_value[j] = value;
@@ -180,7 +180,7 @@ int main(int argc, const char **argv)
       pcount = 0;
       for(int j = 0;j < CAMERA_WIDTH;j++) {
         //if(max_value[j] > (25.0 / 640) * totals[j]) {
-        if(max_value[j] > 14) {
+        if(max_value[j] > 0) {
           //Running subpixel peak detection
           
           //COM7
