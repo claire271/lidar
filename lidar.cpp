@@ -139,6 +139,11 @@ int main(int argc, const char **argv)
     while(!cam->BeginReadFrame(0,frame_data,frame_sz)) {};
 
     textures[cur_frame].SetPixels(frame_data);
+
+    if(cur_frame == 0) {
+
+    }
+
     cur_frame++;
     cur_frame %= 3;
     

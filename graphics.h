@@ -56,4 +56,12 @@ public:
 	GLuint GetId() { return Id; }
 };
 
+void InitDrawRect();
+void DrawTextureRect(GfxTexture* textures);
+void FinishDrawRect(GLvoid* data);
 void DrawTextureRect(GfxTexture* textures, GLvoid* data);
+
+extern GfxProgram GSimpleProg;
+
+#define check() assert(glGetError() == 0)
+

@@ -10,8 +10,6 @@
 #include "graphics.h"
 #include "config.h"
 
-#define check() assert(glGetError() == 0)
-
 EGLDisplay GDisplay;
 EGLSurface GSurface;
 EGLContext GContext;
@@ -277,60 +275,69 @@ bool GfxProgram::Create(GfxShader* vertex_shader, GfxShader* fragment_shader)
 	return true;	
 }
 
-void DrawTextureRect(GfxTexture* textures, GLvoid* data)
-{
-	glUseProgram(GSimpleProg.GetId());
-	check();
+void InitDrawRect() {
+  glUseProgram(GSimpleProg.GetId());
+  check();
+  
+  glUniform2f(glGetUniformLocation(GSimpleProg.GetId(),"offset"),-1.f,1.f);
+  glUniform2f(glGetUniformLocation(GSimpleProg.GetId(),"scale"),2.f,-2.f);
+  glUniform1i(glGetUniformLocation(GSimpleProg.GetId(),"tex1"), 0);
+  glUniform1i(glGetUniformLocation(GSimpleProg.GetId(),"tex2"), 1);
+  glUniform1i(glGetUniformLocation(GSimpleProg.GetId(),"tex3"), 2);
+  glUniform1i(glGetUniformLocation(GSimpleProg.GetId(),"tex4"), 3);
+  glUniform1i(glGetUniformLocation(GSimpleProg.GetId(),"tex5"), 4);
+  
+  glUniform1f(glGetUniformLocation(GSimpleProg.GetId(),"width"),CAMERA_WIDTH);
+  glUniform1f(glGetUniformLocation(GSimpleProg.GetId(),"height"),CAMERA_HEIGHT);
+  check();
+  
+  glBindBuffer(GL_ARRAY_BUFFER, GQuadVertexBuffer);
+  check();
+}
 
-	glUniform2f(glGetUniformLocation(GSimpleProg.GetId(),"offset"),-1.f,1.f);
-	glUniform2f(glGetUniformLocation(GSimpleProg.GetId(),"scale"),2.f,-2.f);
-	glUniform1i(glGetUniformLocation(GSimpleProg.GetId(),"tex1"), 0);
-	glUniform1i(glGetUniformLocation(GSimpleProg.GetId(),"tex2"), 1);
-	glUniform1i(glGetUniformLocation(GSimpleProg.GetId(),"tex3"), 2);
-	glUniform1i(glGetUniformLocation(GSimpleProg.GetId(),"tex4"), 3);
-	glUniform1i(glGetUniformLocation(GSimpleProg.GetId(),"tex5"), 4);
+void DrawTextureRect(GfxTexture* textures) {
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D,(textures + 0)->GetId());	check();
+  glActiveTexture(GL_TEXTURE1);
+  glBindTexture(GL_TEXTURE_2D,(textures + 1)->GetId());	check();
+  glActiveTexture(GL_TEXTURE2);
+  glBindTexture(GL_TEXTURE_2D,(textures + 2)->GetId());	check();
+  glActiveTexture(GL_TEXTURE3);
+  glBindTexture(GL_TEXTURE_2D,(textures + 3)->GetId());	check();
+  glActiveTexture(GL_TEXTURE4);
+  glBindTexture(GL_TEXTURE_2D,(textures + 4)->GetId());	check();
+}
 
-	glUniform1f(glGetUniformLocation(GSimpleProg.GetId(),"width"),CAMERA_WIDTH);
-	glUniform1f(glGetUniformLocation(GSimpleProg.GetId(),"height"),CAMERA_HEIGHT);
-	check();
+void FinishDrawRect(GLvoid* data) {
+  GLuint loc = glGetAttribLocation(GSimpleProg.GetId(),"vertex");
+  check();
+  
+  glVertexAttribPointer(loc, 4, GL_FLOAT, 0, 16, 0);
+  check();
+  
+  glEnableVertexAttribArray(loc);
+  check();
+  
+  glDrawArrays ( GL_TRIANGLE_STRIP, 0, 4 );
+  check();
+  
+  glFinish();
+  check();
+  
+  glFlush();
+  check();
+  
+  glReadPixels(0, 0, CAMERA_WIDTH, CAMERA_HEIGHT, GL_RGBA, GL_UNSIGNED_BYTE, data);
+  check();
+  
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
+  glBindTexture(GL_TEXTURE_2D, 0);
+}
 
-	glBindBuffer(GL_ARRAY_BUFFER, GQuadVertexBuffer);
-	check();
-
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D,(textures + 0)->GetId());	check();
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D,(textures + 1)->GetId());	check();
-	glActiveTexture(GL_TEXTURE2);
-	glBindTexture(GL_TEXTURE_2D,(textures + 2)->GetId());	check();
-	glActiveTexture(GL_TEXTURE3);
-	glBindTexture(GL_TEXTURE_2D,(textures + 3)->GetId());	check();
-	glActiveTexture(GL_TEXTURE4);
-	glBindTexture(GL_TEXTURE_2D,(textures + 4)->GetId());	check();
-
-	GLuint loc = glGetAttribLocation(GSimpleProg.GetId(),"vertex");
-	check();
-
-	glVertexAttribPointer(loc, 4, GL_FLOAT, 0, 16, 0);
-	check();
-
-	glEnableVertexAttribArray(loc);
-	check();
-
-	glDrawArrays ( GL_TRIANGLE_STRIP, 0, 4 );
-	check();
-
-	glFinish();
-	check();
-
-	glFlush();
-	check();
-
-    glReadPixels(0, 0, CAMERA_WIDTH, CAMERA_HEIGHT, GL_RGBA, GL_UNSIGNED_BYTE, data);
-	check();
-
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindTexture(GL_TEXTURE_2D, 0);
+void DrawTextureRect(GfxTexture* textures,GLvoid* data) {
+  InitDrawRect();
+  DrawTextureRect(textures);
+  FinishDrawRect(data);
 }
 
 bool GfxTexture::Create(int width, int height, const void* data)
