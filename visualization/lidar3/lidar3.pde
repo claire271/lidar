@@ -7,7 +7,7 @@ final int H = 100;
 final int iwidth = 640;
 final int iheight = 480;
 
-final int scale = 5;
+final int scale = 2;
 final int GB = 63;
 
 Serial port;       
