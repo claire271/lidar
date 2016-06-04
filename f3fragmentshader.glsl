@@ -27,15 +27,15 @@ void main(void)
   res.r = f3(tcoord);
 
   //Calculating sharpened
-  //res.b =
-    //-f3(tcoord - vec2(0,2.0/height)) + f3(tcoord - vec2(0,1.0/height)) +
-    //res.r +
-    //-f3(tcoord + vec2(0,2.0/height)) + f3(tcoord + vec2(0,1.0/height));
   res.b =
-    f3(tcoord - vec2(0,1.0/height))/2.0 +
-    //res.r +
-    f3(tcoord + vec2(0,1.0/height))/2.0;
-  res.b /= 2.0;
+    -f3(tcoord - vec2(0,2.0/height)) + f3(tcoord - vec2(0,1.0/height)) +
+    res.r +
+    -f3(tcoord + vec2(0,2.0/height)) + f3(tcoord + vec2(0,1.0/height));
+  //res.b =
+    //f3(tcoord - vec2(0,1.0/height))/2.0 +
+    ////res.r +
+    //f3(tcoord + vec2(0,1.0/height))/2.0;
+  res.b /= 3.0;
 
   //Diagnostics output
   vec4 tex4v = texture2D(tex4,tcoord.xy + vec2(0,0));
