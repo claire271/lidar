@@ -170,7 +170,7 @@ int main(int argc, const char **argv)
     //Also output to serial port
     pcount = 0;
     for(int j = 0;j < CAMERA_WIDTH;j++) {
-      if(max_value[j] > 0) {
+      if(max_value[j] > 10) {
         float location = max_index[j];
         
         //Diagnostics display
