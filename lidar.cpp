@@ -140,19 +140,20 @@ int main(int argc, const char **argv)
 
     textures[cur_frame].SetPixels(frame_data);
 
-    if(cur_frame == 0) {
-
-    }
-
-    cur_frame++;
-    cur_frame %= 3;
-    
     cam->EndReadFrame(down_sample);
 
     if(cur_frame == 0) {
+    }
+    else if(cur_frame == 1) {
+    }
+    else if(cur_frame == 2) {
       //begin frame, draw the texture then end frame
+      //DrawTextureRect(textures,(GLvoid*)data_buf);
       BeginFrame();
-      DrawTextureRect(textures,(GLvoid*)data_buf);
+      InitDrawRect();
+      DrawTextureRect(textures);
+      FinishDrawRect((GLvoid*)data_buf);
+      EndFrame();
 
       //Finding the max position and value
       for(int j = 0;j < CAMERA_WIDTH;j++) {
@@ -204,9 +205,10 @@ int main(int argc, const char **argv)
       textures[4].SetPixels(data_buf);
       buf[0] = 255;
       write(tty_fd,buf,1);
-
-      EndFrame();
     }
+
+    cur_frame++;
+    cur_frame %= 3;
      
     gettimeofday(&time, NULL);
     new_time = time.tv_sec * 1000000 + time.tv_usec;
