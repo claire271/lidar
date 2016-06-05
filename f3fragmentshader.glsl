@@ -28,8 +28,12 @@ void main(void)
   //Only once declarations
   vec4 res;
 
+  //Factor with height
+  //float factor = 1.0 / clamp(2.0 * (tcoord.y - 0.5),0.5,1.0);
+  float factor = 1.0;
+
   //Initial f3 and color sub calculation
-  res.r = f3(tcoord);
+  res.r = f3(tcoord) * factor;
   
   //Calculating sharpened
   float sharpened = 
