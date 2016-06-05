@@ -172,12 +172,6 @@ int main(int argc, const char **argv)
         }
       }
 
-      //Test print out
-      //mvprintw(1,0,"0x%X 0x%X 0x%X 0x%X",((unsigned char*)(data_buf + 500))[0],
-               //((unsigned char*)(data_buf + 500))[1],
-               //((unsigned char*)(data_buf + 500))[2],
-               //((unsigned char*)(data_buf + 500))[3]);
-
       //Displaying the found value if it is above a threshold
       //Also output to serial port
       pcount = 0;
