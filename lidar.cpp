@@ -50,6 +50,7 @@ void catch_SIGINT(int sig);
 void* laserloop(void *arg);
 
 bool need_cleanup = false;
+bool sensor_active = true;
 
 GLubyte data_buf[CAMERA_WIDTH * CAMERA_HEIGHT * 4];
 short max_value[CAMERA_WIDTH];
@@ -131,6 +132,19 @@ int main(int argc, const char **argv)
 
   printf("Running frame loop\n");
   for(;!need_cleanup;) {
+    if(read(tty_fd,buf,1) > 0) {
+      if(buf[0] == 'r') {
+        sensor_active = true;
+      }
+      if(buf[0] == 's') {
+        sensor_active = false;
+      }
+    }
+
+    if(!sensor_active) {
+      usleep(1000);
+      continue;
+    }
 
     int down_sample = 0;
 
@@ -142,11 +156,7 @@ int main(int argc, const char **argv)
 
     cam->EndReadFrame(down_sample);
 
-    if(cur_frame == 0) {
-    }
-    else if(cur_frame == 1) {
-    }
-    else if(cur_frame == 2) {
+    if(cur_frame == 2) {
       //begin frame, draw the texture then end frame
       //DrawTextureRect(textures,(GLvoid*)data_buf);
       BeginFrame();
@@ -233,6 +243,12 @@ void* laserloop(void *arg) {
   bool laser_state = false;
 
   for(;!need_cleanup;) {
+    if(!sensor_active) {
+      bcm2835_gpio_write(PIN, LOW);
+      usleep(1000);
+      continue;
+    }
+
     laser_state = !laser_state;
     bcm2835_gpio_write(PIN, laser_state ? HIGH : LOW);
 
