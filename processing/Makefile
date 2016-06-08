@@ -2,10 +2,13 @@ FLAGS = -g
 JC = javac
 .SUFFIXES: .java .class
 .java.class:
-	$(JC) $(JFLAGS) $*.java -cp "./rxtx-2.1-7-bins-r2/RXTXcomm.jar:."
+	$(JC) $(JFLAGS) $*.java -cp "./rxtx-2.2pre2-bins/RXTXcomm.jar:."
 
 CLASSES = \
 	lidar/Visualization.java \
+	lidar/RawFrameInterface.java \
+	lidar/LidarFrameInterface.java \
+	lidar/Lidar.java \
 	lidar/Comm.java \
 	lidar/Main.java 
 
@@ -15,6 +18,3 @@ classes: $(CLASSES:.java=.class)
 
 clean:
 	$(RM) lidar/*.class
-
-run:
-	java -Djava.library.path="./rxtx-2.1-7-bins-r2/Linux/x86_64-unknown-linux-gnu/" -cp "./rxtx-2.1-7-bins-r2/RXTXcomm.jar:." lidar.Main

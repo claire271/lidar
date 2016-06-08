@@ -1,0 +1,1 @@
+java -Djava.library.path="./rxtx-2.2pre2-bins/x86_64-unknown-linux-gnu/" -cp "./rxtx-2.2pre2-bins/RXTXcomm.jar:." lidar.Main

@@ -8,8 +8,11 @@ public class Main {
     try {
       comm.connect("/dev/ttyUSB0");
     }
-    catch (Exception ex) {
+    catch(Exception ex) {
       ex.printStackTrace();
     }
+    Lidar lidar = new Lidar();
+    comm.setReceiver(lidar);
+    lidar.setReceiver(vis);
   }
 }
