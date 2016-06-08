@@ -33,10 +33,16 @@ class VisPanel extends JPanel implements LidarFrameInterface {
   private static final int gridw = 100;
 
   private BufferedImage image;
+  private long old_time;
+  private float fps;
+
+  private static final float TDC = 0.8f;
 
   public VisPanel() {
     super();
 
+    old_time = System.currentTimeMillis();
+    fps = 10.0f;
     image = new BufferedImage(width,height,BufferedImage.TYPE_INT_RGB);
     this.setPreferredSize(new Dimension(width,height));
   }
@@ -63,10 +69,20 @@ class VisPanel extends JPanel implements LidarFrameInterface {
       g.drawLine(width/2 - i,0,width/2 - i,height);
     }
 
+    //Draw points
     g.setColor(new Color(0,255,0));
     for(int i = 0;i < npoints;i++) {
       g.drawRect((int)(width/2 + points[i].x/scale),(int)(height - points[i].y/scale),0,0);
     }
+
+    //Calculate framerate
+    long cur_time = System.currentTimeMillis();
+    float cur_fps = 1000.0f / (cur_time - old_time);
+    old_time = cur_time;
+    fps = fps * TDC + cur_fps * (1.0f - TDC);
+    //Draw framerate
+    g.setColor(Color.WHITE);
+    g.drawString("Current FPS: " + ((int)(fps * 100))/100.0,5,15);
 
     this.repaint();
   }
