@@ -32,13 +32,33 @@ public class Lidar implements RawFrameInterface {
 
   public void processFrame(int data[]) {
     npoints = 0;
+    nlines = 0;
 
+    int prev_data = 0;
+    int prev_index = 0;
     for(int i = 0;i < data.length;i++) {
       if(data[i] == 254 || data[i] == 0) continue;
 
+      //Finding points
       points[npoints].y = VD * H * 1.0f / data[i];
       points[npoints].x = points[npoints].y * (i - IW/2) / VD;
+
+      //Finding groups of points
+      if(npoints > 1) {
+        if(i - prev_index < 4 &&
+           Math.abs(data[i] - prev_data) < 4) {
+          lines[nlines].x1 = points[npoints - 1].x;
+          lines[nlines].y1 = points[npoints - 1].y;
+          lines[nlines].x2 = points[npoints].x;
+          lines[nlines].y2 = points[npoints].y;
+
+          nlines++;
+        }
+      }
+
       npoints++;
+      prev_data = data[i];
+      prev_index = i;
     }
 
     if(receiver != null) {
