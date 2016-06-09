@@ -19,8 +19,8 @@ public class Visualization extends JFrame implements LidarFrameInterface {
     this.pack();
     this.setVisible(true);
   }
-  public void processFrame(Point2D.Float points[],int npoints) {
-    panel.processFrame(points,npoints);
+  public void processFrame(Point2D.Float points[],int npoints,Line2D.Float lines[],int nlines) {
+    panel.processFrame(points,npoints,lines,nlines);
   }
 }
 
@@ -49,7 +49,7 @@ class VisPanel extends JPanel implements LidarFrameInterface {
   public void paint(Graphics g) {
     g.drawImage(image,0,0,Color.BLACK,null);
   }
-  public void processFrame(Point2D.Float points[],int npoints) {
+  public void processFrame(Point2D.Float points[],int npoints,Line2D.Float lines[],int nlines) {
     Graphics2D g = image.createGraphics();
 
     //Background stuff
@@ -75,6 +75,13 @@ class VisPanel extends JPanel implements LidarFrameInterface {
       g.drawRect((int)(width/2 + points[i].x/scale),(int)(height - points[i].y/scale),0,0);
     }
 
+    //Draw lines
+    g.setColor(new Color(0,255,255));
+    for(int i = 0;i < nlines;i++) {
+      g.drawLine((int)(width/2 + lines[i].x1/scale),(int)(height - lines[i].y1/scale),
+                 (int)(width/2 + lines[i].x2/scale),(int)(height - lines[i].y2/scale));
+    }
+
     //Calculate framerate
     long cur_time = System.currentTimeMillis();
     float cur_fps = 1000.0f / (cur_time - old_time);
@@ -82,7 +89,7 @@ class VisPanel extends JPanel implements LidarFrameInterface {
     fps = fps * TDC + cur_fps * (1.0f - TDC);
     //Draw framerate
     g.setColor(Color.WHITE);
-    g.drawString("Current FPS: " + ((int)(fps * 100))/100.0,5,15);
+    g.drawString("Current FPS: " + ((int)(fps * 100 + 0.5))/100.0,5,15);
 
     this.repaint();
   }

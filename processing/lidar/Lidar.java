@@ -10,6 +10,8 @@ public class Lidar implements RawFrameInterface {
 
   private Point2D.Float points[] = new Point2D.Float[IW];
   private int npoints;
+  private Line2D.Float lines[] = new Line2D.Float[IW];
+  private int nlines;
 
   private LidarFrameInterface receiver = null;
 
@@ -17,6 +19,10 @@ public class Lidar implements RawFrameInterface {
     npoints = 0;
     for(int i = 0;i < points.length;i++) {
       points[i] = new Point2D.Float(0,0);
+    }
+    nlines = 0;
+    for(int i = 0;i < lines.length;i++) {
+      lines[i] = new Line2D.Float(0,0,0,0);
     }
   }
 
@@ -36,7 +42,7 @@ public class Lidar implements RawFrameInterface {
     }
 
     if(receiver != null) {
-      receiver.processFrame(points,npoints);
+      receiver.processFrame(points,npoints,lines,nlines);
     }
   }
 }
