@@ -65,6 +65,10 @@ GLubyte out_tex_buf[CAMERA_WIDTH * CAMERA_HEIGHT * 4];
 
 int main(int argc, const char **argv)
 {
+  //Do we want terminal output
+  unsigned char display = argc > 1 && !strcmp(argv[1],"display");
+  printf("DISPLAY: %s\n",display ? "TRUE" : "FALSE");
+
   //Init the laser output
   if(!bcm2835_init())
     return 1;
@@ -120,13 +124,15 @@ int main(int argc, const char **argv)
   int pos = 0;
   float uspf = 33;
 
-  //Init ncurses
-  initscr();      /* initialize the curses library */
-  keypad(stdscr, TRUE);  /* enable keyboard mapping */
-  nonl();         /* tell curses not to do NL->CR/NL on output */
-  cbreak();       /* take input chars one at a time, no wait for \n */
-  clear();
-  nodelay(stdscr, TRUE);
+  if(display) {
+    //Init ncurses
+    initscr();      /* initialize the curses library */
+    keypad(stdscr, TRUE);  /* enable keyboard mapping */
+    nonl();         /* tell curses not to do NL->CR/NL on output */
+    cbreak();       /* take input chars one at a time, no wait for \n */
+    clear();
+    nodelay(stdscr, TRUE);
+  }
 
   unsigned char cur_frame = 0;
 
@@ -219,12 +225,16 @@ int main(int argc, const char **argv)
     int max = (new_time - old_time) / 1000;
     old_time = new_time;
 
-    mvprintw(0,0,"CURRENT fps: %.2f",1000.0 / (uspf = (uspf*.99 + max*.01)));
-    //printf("CURRENT fps: %.2f",1000.0 / (uspf = (uspf*.99 + max*.01)));
-    refresh();
+    if(display) {
+      mvprintw(0,0,"CURRENT fps: %.2f",1000.0 / (uspf = (uspf*.99 + max*.01)));
+      //printf("CURRENT fps: %.2f",1000.0 / (uspf = (uspf*.99 + max*.01)));
+      refresh();
+    }
   }
 
-  endwin();
+  if(display) {
+    endwin();
+  }
   StopCamera();
   close(tty_fd);
   return 0;
