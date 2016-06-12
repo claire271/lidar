@@ -56,6 +56,7 @@ GLubyte data_buf[CAMERA_WIDTH * CAMERA_HEIGHT * 4];
 short max_value[CAMERA_WIDTH];
 short max_index[CAMERA_WIDTH];
 int totals[CAMERA_WIDTH];
+int total_diffs[CAMERA_WIDTH];
 
 short xpos[CAMERA_WIDTH];
 short dpos[CAMERA_WIDTH];
@@ -176,11 +177,17 @@ int main(int argc, const char **argv)
         max_value[j] = 0;
         max_index[j] = -1;
         totals[j] = 0;
+        total_diffs[j] = 0;
       }
       for(int j = 0;j < CAMERA_WIDTH;j++) {
+        short prev_value;
         for(int i = DM;i < CAMERA_HEIGHT / 2 - DM;i++) {
           short value = data_buf[((i * CAMERA_WIDTH) + j) * 4 + 2];
           totals[j] += value;
+          if(i > DM) {
+            total_diffs[j] += abs(value - prev_value);
+          }
+          prev_value = value;
           if(value > max_value[j]) {
             max_value[j] = value;
             max_index[j] = CAMERA_HEIGHT - i - 1;
@@ -193,7 +200,8 @@ int main(int argc, const char **argv)
       pcount = 0;
       for(int j = 0;j < CAMERA_WIDTH;j++) {
         //if(max_value[j] > (25.0 / 640) * totals[j]) {
-        if(max_value[j] > 12) {
+        if(max_value[j] * 40 > totals[j] + total_diffs[j]) {
+        //if(max_value[j] > 6) {
           //Diagnostics display
           out_tex_buf[((max_index[j] * CAMERA_WIDTH) + j) * 4 + 1] = 255;
 
