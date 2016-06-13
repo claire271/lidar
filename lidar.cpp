@@ -39,7 +39,7 @@
 #define DM 3
 
 //buffer for serial output
-unsigned char buf[2];
+unsigned char buf[3];
 
 //buffer for subpixel peak detection
 short spbuf[7];
@@ -199,21 +199,49 @@ int main(int argc, const char **argv)
       //Also output to serial port
       pcount = 0;
       for(int j = 0;j < CAMERA_WIDTH;j++) {
+        //Zero out lower part byte
         //if(max_value[j] > (25.0 / 640) * totals[j]) {
-        if(max_value[j] * 40 > totals[j] + total_diffs[j]) {
         //if(max_value[j] > 6) {
+        if(max_value[j] * 40 > totals[j] + total_diffs[j]) {
+          // printf("%i %i\n",totals[j],total_diffs[j]);
           //Diagnostics display
           out_tex_buf[((max_index[j] * CAMERA_WIDTH) + j) * 4 + 1] = 255;
 
           int output = max_index[j] - CAMERA_HEIGHT / 2;
           if(output > 254) output = 254;
+          output *= 16;
 
-          buf[0] = (int)(output);
-          write(tty_fd,buf,1);
+          //Running subpixel peak detection
+          //COM7
+          int total = 0;
+          for(int i = 0;i < 7;i++) {
+            spbuf[i] = data_buf[(((CAMERA_HEIGHT - 1 - (max_index[j] + i - 3)) * CAMERA_WIDTH) + j) * 4 + 2];
+            total += spbuf[i];
+          }
+          //printf("%i: %i %i %i %i %i %i %i\n",max_value[j],spbuf[0],spbuf[1],spbuf[2],spbuf[3],spbuf[4],spbuf[5],spbuf[6]);
+          //Scaled from 16->a larger number to counteract the sharper peak from shaders
+          output += (3 * spbuf[6] + 2 * spbuf[5] + spbuf[4] - spbuf[2] - 2 * spbuf[1] - 3 * spbuf[0]) * 32 / total;
+
+          if(j % 2) {
+            buf[2] = (int)(output/16);
+            buf[0] |= (output << 4) & 0xF0;
+          }
+          else {
+            buf[1] = (int)(output/16);
+             buf[0] = output & 0x0F;
+          }
         }
         else {
-          buf[0] = 254;
-          write(tty_fd,buf,1);
+          if(j % 2) {
+            buf[2] = 254;
+          }
+          else {
+            buf[1] = 254;
+          }
+        }
+        //Output last 2 bytes
+        if(j % 2) {
+          write(tty_fd,buf,3);
         }
       }
       textures[3].SetPixels(out_tex_buf);
@@ -221,8 +249,10 @@ int main(int argc, const char **argv)
           out_tex_buf[((max_index[j] * CAMERA_WIDTH) + j) * 4 + 1] = 0;
       }
       textures[4].SetPixels(data_buf);
+      buf[2] = 255;
+      buf[1] = 255;
       buf[0] = 255;
-      write(tty_fd,buf,1);
+      write(tty_fd,buf,3);
     }
 
     cur_frame++;
