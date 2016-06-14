@@ -37,7 +37,7 @@
 #define PORT "/dev/ttyAMA0" 
 
 //edge protection margin
-#define DM 3
+#define DM 4
 
 //buffer for serial output
 unsigned char buf[3];
@@ -213,15 +213,15 @@ int main(int argc, const char **argv)
           output *= 16;
 
           //Running subpixel peak detection
-          //COM7
+          //COM9
           int total = 0;
-          for(int i = 0;i < 7;i++) {
-            spbuf[i] = data_buf[(((CAMERA_HEIGHT - 1 - (max_index[j] + i - 3)) * CAMERA_WIDTH) + j) * 4 + 1];
+          for(int i = 0;i < 9;i++) {
+            spbuf[i] = data_buf[(((CAMERA_HEIGHT - 1 - (max_index[j] + i - 4)) * CAMERA_WIDTH) + j) * 4 + 1];
             total += spbuf[i];
           }
           //printf("%i: %i %i %i %i %i %i %i\n",max_value[j],spbuf[0],spbuf[1],spbuf[2],spbuf[3],spbuf[4],spbuf[5],spbuf[6]);
           //Scaled from 16->a larger number to counteract the sharper peak from shaders
-          int correction = (3 * spbuf[6] + 2 * spbuf[5] + spbuf[4] - spbuf[2] - 2 * spbuf[1] - 3 * spbuf[0]) * 16 * 1 / total;
+          int correction = (4 * spbuf[8] + 3 * spbuf[7] + 2 * spbuf[6] + spbuf[5] - spbuf[3] - 2 * spbuf[2] - 3 * spbuf[1] - 4 * spbuf[0]) * 16 * 1 / total;
           //correction = copysignf(1.0, correction) * sqrtf(abs(correction));
           output += correction;
 
