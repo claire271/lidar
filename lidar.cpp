@@ -12,6 +12,7 @@
 #include <pthread.h>
 #include <signal.h>
 #include "config.h"
+#include <math.h>
 
 //should the camera convert frame data from yuv to argb automatically?
 #define DO_ARGB_CONVERSION true
@@ -42,7 +43,7 @@
 unsigned char buf[3];
 
 //buffer for subpixel peak detection
-short spbuf[7];
+short spbuf[9];
 
 void revokeRoot();
 void cleanup();
@@ -215,12 +216,14 @@ int main(int argc, const char **argv)
           //COM7
           int total = 0;
           for(int i = 0;i < 7;i++) {
-            spbuf[i] = data_buf[(((CAMERA_HEIGHT - 1 - (max_index[j] + i - 3)) * CAMERA_WIDTH) + j) * 4 + 2];
+            spbuf[i] = data_buf[(((CAMERA_HEIGHT - 1 - (max_index[j] + i - 3)) * CAMERA_WIDTH) + j) * 4 + 1];
             total += spbuf[i];
           }
           //printf("%i: %i %i %i %i %i %i %i\n",max_value[j],spbuf[0],spbuf[1],spbuf[2],spbuf[3],spbuf[4],spbuf[5],spbuf[6]);
           //Scaled from 16->a larger number to counteract the sharper peak from shaders
-          output += (3 * spbuf[6] + 2 * spbuf[5] + spbuf[4] - spbuf[2] - 2 * spbuf[1] - 3 * spbuf[0]) * 32 / total;
+          int correction = (3 * spbuf[6] + 2 * spbuf[5] + spbuf[4] - spbuf[2] - 2 * spbuf[1] - 3 * spbuf[0]) * 16 * 1 / total;
+          //correction = copysignf(1.0, correction) * sqrtf(abs(correction));
+          output += correction;
 
           if(j % 2) {
             buf[2] = (int)(output/16);
@@ -228,7 +231,7 @@ int main(int argc, const char **argv)
           }
           else {
             buf[1] = (int)(output/16);
-             buf[0] = output & 0x0F;
+            buf[0] = output & 0x0F;
           }
         }
         else {
@@ -268,6 +271,7 @@ int main(int argc, const char **argv)
       //printf("CURRENT fps: %.2f",1000.0 / (uspf = (uspf*.99 + max*.01)));
       refresh();
     }
+    printf("CURRENT fps: %.2f\n",1000.0 / (uspf = (uspf*.99 + max*.01)));
   }
 
   if(display) {

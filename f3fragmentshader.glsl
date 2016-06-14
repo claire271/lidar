@@ -45,10 +45,13 @@ void main(void)
 
   vec4 tex5v = texture2D(tex5,vec2(tcoord.x,1.0-tcoord.y));
   res.b = 0.5 * clamp(sharpened,0.0,1.0) + 0.5 * tex5v.b;
+
+  //Duplicate prev frame output
+  res.g = 0.5 * tex5v.r + 0.5 * tex5v.g;
   
   //Diagnostics output
-  vec4 tex4v = texture2D(tex4,tcoord.xy + vec2(0,0));
-  res.g = tex4v.g;
+  //vec4 tex4v = texture2D(tex4,tcoord.xy + vec2(0,0));
+  //res.g = tex4v.g;
   
   res.a = 1.0;
   
