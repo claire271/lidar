@@ -52,6 +52,10 @@ void main(void)
   //Diagnostics output
   //vec4 tex4v = texture2D(tex4,tcoord.xy + vec2(0,0));
   //res.g = tex4v.g;
+
+  //For calibration
+  //vec4 tex1v = texture2D(tex1,tcoord);
+  //res = tex1v;
   
   res.a = 1.0;
   

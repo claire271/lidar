@@ -189,7 +189,14 @@ MMAL_COMPONENT_T* CCamera::CreateCameraComponentAndSetupPorts()
 
     raspicamcontrol_set_sharpness(camera, 0);
     raspicamcontrol_set_contrast(camera, 0);
+
+    //3.5mW laser 45deg settings
+    //raspicamcontrol_set_brightness(camera, 50);
+    //10mW laser 45deg settings
     raspicamcontrol_set_brightness(camera, 50);
+    //30mW laser 45deg settings
+    //raspicamcontrol_set_brightness(camera, 50);
+
     raspicamcontrol_set_saturation(camera, 0);
     raspicamcontrol_set_ISO(camera, 400);
     raspicamcontrol_set_awb_gains(camera, 1.0, 1.0);

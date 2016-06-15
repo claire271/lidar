@@ -221,8 +221,8 @@ int main(int argc, const char **argv)
           }
           //printf("%i: %i %i %i %i %i %i %i\n",max_value[j],spbuf[0],spbuf[1],spbuf[2],spbuf[3],spbuf[4],spbuf[5],spbuf[6]);
           //Scaled from 16->a larger number to counteract the sharper peak from shaders
-          int correction = (4 * spbuf[8] + 3 * spbuf[7] + 2 * spbuf[6] + spbuf[5] - spbuf[3] - 2 * spbuf[2] - 3 * spbuf[1] - 4 * spbuf[0]) * 16 * 16 / total;
-          correction = copysignf(1.0, correction) * sqrtf(abs(correction));
+          int correction = (4 * spbuf[8] + 3 * spbuf[7] + 2 * spbuf[6] + spbuf[5] - spbuf[3] - 2 * spbuf[2] - 3 * spbuf[1] - 4 * spbuf[0]) * 16 * 1 / total;
+          //correction = copysignf(1.0, correction) * sqrtf(abs(correction));
           output += correction;
 
           if(j % 2) {
