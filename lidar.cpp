@@ -99,7 +99,7 @@ int main(int argc, const char **argv)
   
   tcsetattr(tty_fd,TCSANOW,&tio);
 
-  revokeRoot();
+  //revokeRoot();
 
   //init graphics and the camera
   InitGraphics();
