@@ -14,42 +14,45 @@
 #include "config.h"
 #include <math.h>
 
-//should the camera convert frame data from yuv to argb automatically?
+// Should the camera convert frame data from yuv to argb automatically?
 #define DO_ARGB_CONVERSION true
-//how many detail levels (1 = just the capture res, > 1 goes down by half each level, 4 max)
+// How many detail levels (1 = just the capture res, > 1 goes down by half each level, 4 max)
 #define NUM_LEVELS 1
 
-//raw FPS of the camera
+// Raw FPS of the camera
+// The processed FPS will be FPS/3
 #define FPS 30
 #define laser_freq FPS / 3
 #define laser_duty_cycle .4
 
-//laser control pin
+// Laser control pin
 #define PIN RPI_GPIO_P1_12
 
-//distance to virtual camera plane (px)
+// Distance to virtual camera plane (px)
 #define VD 633
 
-//physical height from camera to laser (mm)
+// Physical height from camera to laser (mm)
 #define H 100
 
-//output serial port
+// Output serial port
 #define PORT "/dev/ttyAMA0" 
 
-//edge protection margin
+// Offset file location
+#define OFFSET_FILE "/boot/offset.txt"
+
+// Edge protection margin
 #define DM 4
 
-//buffer for serial input/output
+// Buffer for serial input/output
 unsigned char buf[64];
 
-//buffer for subpixel peak detection
+// Buffer for subpixel peak detection
 short spbuf[9];
 
-//the offset of the detected points (for calibration)
+// The offset of the detected points (for calibration)
 int offset = 0;
 
 void revokeRoot();
-void cleanup();
 void catch_SIGINT(int sig);
 void* laserloop(void *arg);
 
@@ -70,59 +73,64 @@ GLubyte out_tex_buf[CAMERA_WIDTH * CAMERA_HEIGHT * 4];
 
 int main(int argc, const char **argv)
 {
-	//Do we want terminal output
-	unsigned char display = argc > 1 && !strcmp(argv[1],"display");
+	// Do we want terminal output?
+	unsigned char display = argc > 1 && !strcmp(argv[1], "display");
+	unsigned char debug = argc > 1 && !strcmp(argv[1], "debug");
 	printf("DISPLAY: %s\n",display ? "TRUE" : "FALSE");
+	printf("DEBUG: %s\n",debug ? "TRUE" : "FALSE");
 
-	//Grab the calibration data from a file
-	FILE* offsetRead = fopen("offset", "r");
-	if(offsetRead != NULL) {
+	// Grab the calibration data from a file
+	FILE* offsetRead = fopen(OFFSET_FILE, "r");
+	if(offsetRead != NULL)
+	{
 		fscanf(offsetRead, "%i", &offset);
 		fclose(offsetRead);
 	}
-	printf("Offset: %i", offset);
+	printf("Offset: %i\n", offset);
 
-	//Init the laser output
+	// Init the laser output
 	if(!bcm2835_init())
 		return 1;
 
 	signal(SIGINT, catch_SIGINT);
 
-	//Setting up threads
+	// Setting up threads
 	pthread_t laserthread;
 	pthread_create(&laserthread, NULL, &laserloop, NULL);
 
-	//Setting up serial output
+	// Setting up serial output
 	struct termios tio;
 	int tty_fd;
 
 	memset(&tio,0,sizeof(tio));
 	tio.c_iflag=0;
 	tio.c_oflag=0;
-	tio.c_cflag=CS8|CREAD|CLOCAL;           // 8n1, see termios.h for more information
+	// 8n1, see termios.h for more information
+	tio.c_cflag=CS8|CREAD|CLOCAL;
 	tio.c_lflag=0;
 	tio.c_cc[VMIN]=1;
 	tio.c_cc[VTIME]=5;
   
 	tty_fd=open(PORT, O_RDWR | O_NONBLOCK);      
-	cfsetospeed(&tio,B115200);            // 115200 baud
-	cfsetispeed(&tio,B115200);            // 115200 baud
+	cfsetospeed(&tio,1000000);
+	cfsetispeed(&tio,1000000);
   
 	tcsetattr(tty_fd,TCSANOW,&tio);
 
-	//revokeRoot();
-
-	//init graphics and the camera
+	// Init graphics and the camera
 	InitGraphics();
 	CCamera* cam = StartCamera(CAMERA_WIDTH, CAMERA_HEIGHT,FPS,NUM_LEVELS,DO_ARGB_CONVERSION);
 
 	GfxTexture textures[5];
-	for(int i = 0;i < 5;i++) {
+	for(int i = 0;i < 5;i++)
+	{
 		textures[i].Create(CAMERA_WIDTH,CAMERA_HEIGHT);
 	}
 
-	for(int i = 0;i < CAMERA_HEIGHT;i++) {
-		for(int j = 0;j < CAMERA_WIDTH;j++) {
+	for(int i = 0;i < CAMERA_HEIGHT;i++)
+	{
+		for(int j = 0;j < CAMERA_WIDTH;j++)
+		{
 			out_tex_buf[((i * CAMERA_WIDTH) + j) * 4 + 0] = 0;
 			out_tex_buf[((i * CAMERA_WIDTH) + j) * 4 + 1] = 0;
 			out_tex_buf[((i * CAMERA_WIDTH) + j) * 4 + 2] = 0;
@@ -137,12 +145,12 @@ int main(int argc, const char **argv)
 	int pos = 0;
 	float uspf = 33;
 
-	if(display) {
-		//Init ncurses
-		initscr();      /* initialize the curses library */
-		keypad(stdscr, TRUE);  /* enable keyboard mapping */
-		nonl();         /* tell curses not to do NL->CR/NL on output */
-		cbreak();       /* take input chars one at a time, no wait for \n */
+	if(display)
+	{
+		initscr();     	        // initialize the curses library
+		keypad(stdscr, TRUE);   // enable keyboard mapping
+		nonl();                 // tell curses not to do NL->CR/NL on output
+		cbreak();               // take input chars one at a time, no wait for \n
 		clear();
 		nodelay(stdscr, TRUE);
 	}
@@ -150,37 +158,46 @@ int main(int argc, const char **argv)
 	unsigned char cur_frame = 0;
 
 	printf("Running frame loop\n");
-	for(;!need_cleanup;) {
-		if(read(tty_fd,buf,1) > 0) {
-			//Laser on/off
-			if(buf[0] == 'l') {
-				//Blocking read for a byte
+	for(;!need_cleanup;)
+	{
+		if(read(tty_fd,buf,1) > 0)
+		{
+			// Laser on/off
+			if(buf[0] == 'l')
+			{
+				// Blocking read for a byte
 				while(read(tty_fd, buf, 1) <= 0);
 
-				if(buf[0] == 'r') {
+				if(buf[0] == 'r')
+				{
 					sensor_active = true;
 
-					//Reset old time so that it does not read low
+					// Reset old time so that it does not read low
 					gettimeofday(&time, NULL);
 					old_time = time.tv_sec * 1000000 + time.tv_usec;
 				}
-				else if(buf[0] == 's') {
+				else if(buf[0] == 's')
+				{
 					sensor_active = false;
 				}
 			}
-			//Offset configuration
-			else if(buf[0] == 'o') {
-				//Blocking read for a byte
+
+			// Offset configuration
+			else if(buf[0] == 'o')
+			{
+				// Blocking read for a byte
 				while(read(tty_fd, buf, 1) <= 0);
 				unsigned char overwrite = buf[0] == 'o';
 				unsigned char add = buf[0] == 'a';
 
 				int i = 0;
-				for(;;) {
-					//Blocking read for a byte
+				for(;;)
+				{
+					// Blocking read for a byte
 					while(read(tty_fd, buf + i, 1) <= 0);
-					//We've reached the end of the number
-					if(buf[i] == ' ') {
+					// We've reached the end of the number
+					if(buf[i] == ' ')
+					{
 						buf[i] = 0;
 						break;
 					}
@@ -188,126 +205,139 @@ int main(int argc, const char **argv)
 				}
 				int new_offset = atoi((char*)buf);
 
-				if(overwrite) {
+				if(overwrite)
+				{
 					offset = new_offset;
 				}
-				else if(add) {
+				else if(add)
+				{
 					offset += new_offset;
 				}
 
-				FILE* offsetWrite = fopen("offset", "w");
-				if(offsetWrite != NULL) {
+				FILE* offsetWrite = fopen(OFFSET_FILE, "w");
+				if(offsetWrite != NULL)
+				{
 					fprintf(offsetWrite, "%i\n", offset);
 					fclose(offsetWrite);
 				}
 			}
-			//Network configuration
-			else if(buf[0] == 'n') {
-
-			}
 		}
 
-		if(!sensor_active) {
+		// Sleep if we're not currently measuring
+		if(!sensor_active)
+		{
 			usleep(1000);
 			continue;
 		}
 
 		int down_sample = 0;
 
-		//spin until we have a camera frame
+		// Spin until we have a camera frame
 		const void* frame_data; int frame_sz;
-		while(!cam->BeginReadFrame(0,frame_data,frame_sz)) {};
+		while(!cam->BeginReadFrame(0,frame_data,frame_sz));
 
 		textures[cur_frame].SetPixels(frame_data);
 
 		cam->EndReadFrame(down_sample);
 
-		if(cur_frame == 2) {
-			//begin frame, draw the texture then end frame
-			//DrawTextureRect(textures,(GLvoid*)data_buf);
+		// Process three frames together
+		if(cur_frame == 2)
+		{
+			// Begin frame, draw the texture then end frame
 			BeginFrame();
 			InitDrawRect();
 			DrawTextureRect(textures);
 			FinishDrawRect((GLvoid*)data_buf);
 			EndFrame();
 
-			//Finding the max position and value
-			for(int j = 0;j < CAMERA_WIDTH;j++) {
+			// Finding the max position and value
+			for(int j = 0;j < CAMERA_WIDTH;j++)
+			{
 				max_value[j] = 0;
 				max_index[j] = -1;
 				totals[j] = 0;
 				total_diffs[j] = 0;
 			}
-			for(int j = 0;j < CAMERA_WIDTH;j++) {
+			for(int j = 0;j < CAMERA_WIDTH;j++)
+			{
 				short prev_value;
-				for(int i = DM;i < CAMERA_HEIGHT / 2 - DM;i++) {
+				for(int i = DM;i < CAMERA_HEIGHT / 2 - DM;i++)
+				{
 					short value = data_buf[((i * CAMERA_WIDTH) + j) * 4 + 2];
 					totals[j] += value;
-					if(i > DM) {
+					if(i > DM)
+					{
 						total_diffs[j] += abs(value - prev_value);
 					}
 					prev_value = value;
-					if(value > max_value[j]) {
+					if(value > max_value[j])
+					{
 						max_value[j] = value;
 						max_index[j] = CAMERA_HEIGHT - i - 1;
 					}
 				}
 			}
 
-			//Displaying the found value if it is above a threshold
-			//Also output to serial port
+			// Displaying the found value if it is above a threshold
+			// Also output to serial port
 			pcount = 0;
-			for(int j = 0;j < CAMERA_WIDTH;j++) {
-				//Zero out lower part byte
-				//if(max_value[j] > (25.0 / 640) * totals[j]) {
-				//if(max_value[j] > 6) {
-				if(max_value[j] * 40 > totals[j] + total_diffs[j]) {
-					// printf("%i %i\n",totals[j],total_diffs[j]);
-					//Diagnostics display
+			for(int j = 0;j < CAMERA_WIDTH;j++)
+			{
+				// Zero out lower part byte
+				if(max_value[j] * 40 > totals[j] + total_diffs[j])
+				{
+					// Diagnostics display
 					out_tex_buf[((max_index[j] * CAMERA_WIDTH) + j) * 4 + 1] = 255;
 
 					int output = max_index[j] - CAMERA_HEIGHT / 2;
 					if(output > 254) output = 254;
 					output *= 16;
 
-					//Running subpixel peak detection
-					//COM9
+					// Running subpixel peak detection
+					// Center of mass with 9 pixels (COM9)
 					int total = 0;
-					for(int i = 0;i < 9;i++) {
+					for(int i = 0;i < 9;i++)
+					{
 						spbuf[i] = data_buf[(((CAMERA_HEIGHT - 1 - (max_index[j] + i - 4)) * CAMERA_WIDTH) + j) * 4 + 1];
 						total += spbuf[i];
 					}
-					//printf("%i: %i %i %i %i %i %i %i\n",max_value[j],spbuf[0],spbuf[1],spbuf[2],spbuf[3],spbuf[4],spbuf[5],spbuf[6]);
 					//Scaled from 16->a larger number to counteract the sharper peak from shaders
 					int correction = (4 * spbuf[8] + 3 * spbuf[7] + 2 * spbuf[6] + spbuf[5] - spbuf[3] - 2 * spbuf[2] - 3 * spbuf[1] - 4 * spbuf[0]) * 16 * 1 / total;
-					//correction = copysignf(1.0, correction) * sqrtf(abs(correction));
 					output += correction;
 					output += offset;
 
-					if(j % 2) {
+					if(j % 2)
+					{
 						buf[2] = (int)(output/16);
 						buf[0] |= (output << 4) & 0xF0;
 					}
-					else {
+					else
+					{
 						buf[1] = (int)(output/16);
 						buf[0] = output & 0x0F;
 					}
 				}
-				else {
-					if(j % 2) {
+				else
+				{
+					if(j % 2)
+					{
 						buf[2] = 254;
 					}
-					else {
+					else
+					{
 						buf[1] = 254;
 					}
 				}
-				//Output last 2 bytes
-				if(j % 2) {
+
+				// Output last 2 values
+				if(j % 2)
+				{
 					write(tty_fd,buf,3);
 				}
 			}
 			textures[3].SetPixels(out_tex_buf);
-			for(int j = 0;j < CAMERA_WIDTH;j++) {
+			for(int j = 0;j < CAMERA_WIDTH;j++)
+			{
 				out_tex_buf[((max_index[j] * CAMERA_WIDTH) + j) * 4 + 1] = 0;
 			}
 			textures[4].SetPixels(data_buf);
@@ -325,15 +355,20 @@ int main(int argc, const char **argv)
 		int max = (new_time - old_time) / 1000;
 		old_time = new_time;
 
-		if(display) {
+		if(display)
+		{
 			mvprintw(0,0,"CURRENT fps: %.2f",1000.0 / (uspf = (uspf*.99 + max*.01)));
-			//printf("CURRENT fps: %.2f",1000.0 / (uspf = (uspf*.99 + max*.01)));
 			refresh();
 		}
-		printf("CURRENT fps: %.2f\n",1000.0 / (uspf = (uspf*.99 + max*.01)));
+		if(debug)
+		{
+			printf("CURRENT fps: %.2f\n",1000.0 / (uspf = (uspf*.99 + max*.01)));
+		}
 	}
 
-	if(display) {
+	// Cleanup
+	if(display)
+	{
 		endwin();
 	}
 	StopCamera();
@@ -341,7 +376,8 @@ int main(int argc, const char **argv)
 	return 0;
 }
 
-void* laserloop(void *arg) {
+void* laserloop(void *arg)
+{
 	//Setting up timer stuff
 	struct timeval tv;
 	gettimeofday(&tv,NULL);
@@ -351,8 +387,10 @@ void* laserloop(void *arg) {
 
 	bool laser_state = false;
 
-	for(;!need_cleanup;) {
-		if(!sensor_active) {
+	for(;!need_cleanup;)
+	{
+		if(!sensor_active)
+		{
 			bcm2835_gpio_write(PIN, LOW);
 			usleep(1000);
 			continue;
@@ -370,18 +408,7 @@ void* laserloop(void *arg) {
 	return 0;
 }
 
-void cleanup() {
-}
-
-void catch_SIGINT(int sig) {
-	need_cleanup = true;
-}
-
-void revokeRoot()
+void catch_SIGINT(int sig)
 {
-	if (getuid () + geteuid () == 0)      // Really running as root
-		return ;
-
-	if (geteuid () == 0)                  // Running setuid root
-		seteuid (getuid ()) ;               // Change effective uid to the uid of the caller
+	need_cleanup = true;
 }
